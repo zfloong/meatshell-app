@@ -1,9 +1,56 @@
 /* ============================================================
-   Taleb Universe - Global Logic Engine vFinal
-   Content: 80 Quotes (Western Philosophy + Eastern Wisdom)
+   Taleb Universe - Global Logic Engine vClean
+   Current State: Navigation Only (Quotes archived for History Axis)
    ============================================================ */
 
-// 1. 核心数据：塔勒布语录库 (中西合璧版)
+// 1. 核心配置：全站导航菜单
+const navLinks = [
+    { name: '首 页', path: 'index.html' },
+    { name: '狂野生长', path: 'wild.html' },
+    { name: '待定 · 墨水', path: 'library.html' },
+    { name: '待定 · 黄金', path: 'finance.html' }
+];
+
+// ============================================================
+// 2. 注入引擎 (Injection Engine)
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderGlobalHeader();
+    // Timeline 交互已移除
+});
+
+function renderGlobalHeader() {
+    // 创建容器
+    const header = document.createElement('div');
+    header.id = 'global-header';
+    
+    // 生成导航栏 HTML (仅保留此部分)
+    let navHTML = `<div class="nav-bar">`;
+    const currentPath = window.location.pathname;
+
+    navLinks.forEach(link => {
+        let isActive = false;
+        // 简单的路径匹配逻辑
+        if (link.path === 'index.html' && (currentPath.endsWith('/') || currentPath.endsWith('index.html'))) {
+            isActive = true;
+        } else if (link.path !== 'index.html' && currentPath.includes(link.path)) {
+            isActive = true;
+        }
+
+        navHTML += `<a href="${link.path}" class="nav-link ${isActive ? 'active' : ''}">${link.name}</a>`;
+    });
+    navHTML += `</div>`;
+
+    // 插入页面顶部
+    header.innerHTML = navHTML;
+    document.body.prepend(header);
+}
+
+/* ============================================================
+   ARCHIVE: DATA STORE
+   保留此处数据，用于未来的“历史长轴”项目
+   ============================================================ */
 const quotesDB = [
     // --- 第一组 (1-10) ---
     { text: "世上最有害的三种成瘾是：海洛因、碳水化合物，以及月薪。", tag: "死于安乐 - 《孟子》" },
@@ -99,113 +146,3 @@ const quotesDB = [
     { text: "真正的强者不需要证明自己。", tag: "桃李不言，下自成蹊 - 《史记》" },
     { text: "不要询问理发师你是否需要理发。", tag: "与虎谋皮 - 《太平御览》" }
 ];
-
-// 2. 核心配置：全站导航菜单
-const navLinks = [
-    { name: '首 页', path: 'index.html' },
-    { name: '狂野生长', path: 'wild.html' },
-    { name: '待定 · 墨水', path: 'library.html' },
-    { name: '待定 · 黄金', path: 'finance.html' }
-];
-
-// ============================================================
-// 3. 注入引擎 (Injection Engine)
-// ============================================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    renderGlobalHeader();
-    initTimelineInteraction();
-});
-
-function renderGlobalHeader() {
-    // 创建容器
-    const header = document.createElement('div');
-    header.id = 'global-header';
-    
-    // A. 生成时间轴 HTML
-    let timelineHTML = `
-        <div class="timeline-wrapper" id="timeline">
-            <div class="timeline-track" id="track">`;
-    
-    // 计算今天的高亮索引
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const todayIndex = dayOfYear % quotesDB.length;
-
-    quotesDB.forEach((quote, index) => {
-        const isHighlight = index === todayIndex ? 'highlight' : '';
-        const uniqueId = index === todayIndex ? 'id="today-quote"' : ''; 
-        
-        timelineHTML += `
-            <div class="timeline-node ${isHighlight}" ${uniqueId}>
-                <div class="node-dot"></div>
-                <div class="quote-content">“${quote.text}”</div>
-                <div class="quote-author">${quote.tag}</div>
-            </div>
-        `;
-    });
-
-    timelineHTML += `</div></div>`;
-
-    // B. 生成导航栏 HTML
-    let navHTML = `<div class="nav-bar">`;
-    const currentPath = window.location.pathname;
-
-    navLinks.forEach(link => {
-        let isActive = false;
-        if (link.path === 'index.html' && (currentPath.endsWith('/') || currentPath.endsWith('index.html'))) {
-            isActive = true;
-        } else if (link.path !== 'index.html' && currentPath.includes(link.path)) {
-            isActive = true;
-        }
-
-        navHTML += `<a href="${link.path}" class="nav-link ${isActive ? 'active' : ''}">${link.name}</a>`;
-    });
-    navHTML += `</div>`;
-
-    // 组合并插入页面顶部
-    header.innerHTML = timelineHTML + navHTML;
-    document.body.prepend(header);
-}
-
-// ============================================================
-// 4. 交互逻辑 (Interaction Logic)
-// ============================================================
-
-function initTimelineInteraction() {
-    const wrapper = document.getElementById('timeline');
-    const track = document.getElementById('track');
-    
-    if (!wrapper) return;
-
-    // --- 自动滚动到今天 ---
-    const todayEl = document.getElementById('today-quote');
-    if (todayEl) {
-        setTimeout(() => {
-            const centerPos = todayEl.offsetLeft - (wrapper.clientWidth / 2) + (todayEl.clientWidth / 2);
-            wrapper.scrollTo({ left: centerPos, behavior: 'smooth' });
-        }, 100);
-    }
-
-    // --- 鼠标拖拽逻辑 ---
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    wrapper.addEventListener('mousedown', (e) => {
-        isDown = true;
-        wrapper.classList.add('active');
-        startX = e.pageX - wrapper.offsetLeft;
-        scrollLeft = wrapper.scrollLeft;
-    });
-
-    wrapper.addEventListener('mouseleave', () => { isDown = false; wrapper.classList.remove('active'); });
-    wrapper.addEventListener('mouseup', () => { isDown = false; wrapper.classList.remove('active'); });
-
-    wrapper.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - wrapper.offsetLeft;
-        const walk = (x - startX) * 1.5; 
-        wrapper.scrollLeft = scrollLeft - walk;
-    });
-}
