@@ -1,6 +1,7 @@
 /* =========================================
-   Wildness Awakening - Final Refined
-   Pure Chinese & Perfect Spacing
+   Wildness Awakening - Final Master CSS
+   Layout: Vertical Flow (Top Hero / Bottom Timeline)
+   Theme: Raw, Organic, Cinematic (No Borders)
    ========================================= */
 
 /* 全屏包装器 */
@@ -10,96 +11,66 @@
     overflow-x: hidden;
 }
 
-/* --- 1. 仪表盘网格布局 --- */
+/* --- 1. 仪表盘布局：上下结构 --- */
 .wild-dashboard {
-    display: grid;
-    grid-template-columns: 320px 1fr; 
-    gap: 0;
-    min-height: 85vh;
-}
-
-/* --- 2. 左侧边栏 (Sidebar) --- */
-.timeline-sidebar {
-    background: rgba(20, 22, 26, 0.4);
-    border-right: 1px solid var(--border);
-    padding: 30px; /* 增加内边距 */
-    height: 100%;
-}
-
-.sidebar-header {
-    margin-left: 15px; /* 对齐微调 */
-    margin-bottom: 30px;
-    font-size: 1rem; /* 稍微放大 */
-    color: var(--accent);
-    font-family: var(--font-serif);
-    letter-spacing: 2px;
-    opacity: 0.8;
-    font-weight: bold;
-}
-
-.timeline-item {
     display: flex;
-    align-items: center;
-    padding: 15px;
-    margin-bottom: 12px;
-    border-radius: 6px;
-    background: transparent;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    cursor: default;
+    flex-direction: column;
+    align-items: center; /* 子元素居中 */
+    gap: 40px; /* 上下间距 */
+    min-height: 85vh;
+    padding-bottom: 60px;
 }
 
-.timeline-item:hover {
-    background: rgba(255,255,255,0.03);
-    border-color: var(--border);
-    transform: translateX(5px);
-}
-
-.timeline-dot {
-    width: 6px; /* 稍微调小圆点，更精致 */
-    height: 6px;
-    background: var(--text-muted);
-    border-radius: 50%;
-    margin-right: 15px;
-    flex-shrink: 0;
-}
-
-.timeline-item:hover .timeline-dot {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-}
-
-.timeline-content { flex-grow: 1; }
-.t-day { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px; }
-.t-title { font-size: 1rem; color: var(--text-main); font-weight: 500; }
-
-
-/* --- 3. 右侧核心区域 (Hero Section) --- */
+/* --- 2. 核心区域 (Hero Section) --- */
 .hero-section {
-    padding: 0 60px 80px 60px;
-    animation: fadeIn 0.6s ease-out;
+    width: 100%;
+    max-width: 1100px; /* 限制最大宽度，防止在大屏上太扁 */
+    padding: 0 20px;
+    animation: fadeIn 0.8s ease-out;
 }
 
+/* 卡片容器：去线框化，深邃感 */
 .day-card.hero-mode {
     width: 100%;
     min-height: 700px;
-    border: 1px solid var(--accent);
+    background: #0f1115; /* 纯深色底 */
+    border: none; /* 【关键】去掉细边框 */
     border-radius: 16px;
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
     position: relative;
     overflow: hidden;
+    
+    /* 强阴影，制造悬浮感 */
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 
+                0 0 0 1px rgba(255,255,255,0.05); 
 }
 
+/* --- 3. 图片处理：电影级质感 --- */
 .day-card.hero-mode .card-image {
-    height: 100%; width: 100%;
+    height: 100%; 
+    width: 100%;
     position: absolute;
-    top: 0; left: 0;
-    opacity: 0.15;
-    filter: grayscale(100%);
+    top: 0; 
+    left: 0;
     z-index: 0;
-    transition: transform 10s ease;
+    
+    opacity: 0.6; /* 提高不透明度 */
+    filter: grayscale(80%) contrast(1.2); /* 保留一点色彩，高对比 */
+    transition: transform 10s ease, filter 0.5s ease, opacity 0.5s ease;
+
+    /* 【核心】渐变遮罩：让图片底部渐隐为黑色，保证文字清晰 */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.05) 100%);
+    
+    /* 混合模式：让图片纹理与背景融合 */
+    mix-blend-mode: overlay; 
 }
-.day-card.hero-mode:hover .card-image { transform: scale(1.05); }
+
+/* 鼠标悬停交互：野性觉醒 */
+.day-card.hero-mode:hover .card-image { 
+    transform: scale(1.03); 
+    filter: grayscale(0%) contrast(1.1); /* 恢复色彩 */
+    opacity: 0.8;
+}
 
 .day-card.hero-mode .card-content {
     position: relative;
@@ -108,109 +79,231 @@
     text-align: center;
 }
 
-/* =========================================
-   头部排版优化 (Header Row)
-   ========================================= */
+/* --- 4. 头部排版：强张力 --- */
 .hero-header-row {
     display: flex;
-    align-items: center; /* 垂直居中对齐 */
+    align-items: center;
     justify-content: center;
-    margin-bottom: 5px; /* 缩小下方间距，紧凑感 */
-    height: 60px; /* 固定高度，确保对齐 */
+    margin-bottom: 10px;
+    height: 60px;
 }
 
-/* 日期与标题 */
 .day-card.hero-mode .day-name,
 .day-card.hero-mode .card-title {
-    font-size: 3rem; /* 增大字号 */
+    font-size: 3rem;
     color: var(--accent); 
     font-family: var(--font-serif);
     margin: 0;
     line-height: 1;
     white-space: nowrap;
-    text-shadow: 0 0 20px rgba(0,0,0,0.8);
     font-weight: 700;
+    
+    /* 文字强阴影，防止背景干扰 */
+    text-shadow: 0 10px 30px rgba(0,0,0,1); 
 }
 
-/* 金色分割线 (调整为垂直) */
+/* 发光的分割线 */
 .hero-divider {
-    width: 2px; /* 变细一点 */
-    height: 36px; /* 配合字号高度 */
-    background-color: var(--accent);
-    margin: 0 25px; /* 左右间距统一 */
+    width: 2px;
+    height: 36px;
+    background-color: #fff; /* 亮白 */
+    margin: 0 25px;
     transform: rotate(20deg); 
-    box-shadow: 0 0 8px var(--accent);
-    opacity: 0.8;
+    box-shadow: 0 0 15px var(--accent); /* 金色光晕 */
+    opacity: 0.9;
 }
 
-/* 语录排版优化 */
 .day-card.hero-mode .remark {
-    font-size: 1.4rem; /* 稍微放大 */
+    font-size: 1.4rem;
     color: #e0e0e0;
     line-height: 1.6;
     max-width: 900px;
-    /* 严格控制间距：上方与Subtitle拉开，下方与列表拉开 */
     margin: 20px auto 40px auto; 
     font-weight: 300;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* =========================================
-   清单区域优化 (Protocol Grid)
-   ========================================= */
+/* --- 5. 清单区域：去线框化，强调内容 --- */
 .day-card.hero-mode .protocol-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 50px; /* 间距微调 */
+    gap: 50px;
+    margin-top: 20px;     
+    padding-top: 40px;    
     
-    /* 顶部间距控制 */
-    margin-top: 30px;     
-    padding-top: 30px;    
-    
-    border-top: 1px solid rgba(255,255,255,0.1);
+    /* 去掉顶部横线，改为底部渐变背景 */
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6)); 
+    border-top: none; 
     text-align: left;
+    padding-bottom: 20px;
 }
 
+/* 标题徽章化 */
 .col-title {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: 700;
+    display: inline-block;
+    margin-bottom: 30px;
+    padding-bottom: 0;
+    border-bottom: none; /* 去掉下划线 */
+    letter-spacing: 2px;
+    position: relative;
+}
+
+/* 标题下方的装饰点 */
+.col-title::after {
+    content: '';
     display: block;
-    margin-bottom: 20px; /* 统一间距 */
-    padding-bottom: 12px;
-    border-bottom: 2px solid rgba(255,255,255,0.1);
+    width: 40px;
+    height: 4px;
+    background: currentColor; /* 跟随文字颜色 */
+    margin-top: 10px;
+    border-radius: 2px;
+    opacity: 0.6;
+    box-shadow: 0 0 10px currentColor; /* 发光 */
 }
 
-.col-title.allowed { color: #10b981; }
-.col-title.avoid { color: #ef4444; }
-.col-title.move { color: #d4b483; }
-
-/* 列表条目优化 */
+/* 列表文字加强 */
 .protocol-list li {
-    font-size: 1.3rem; /* 适中大小 */
+    font-size: 1.3rem;
     font-weight: 500;
-    color: #f5f5f5;
-    margin-bottom: 16px; /* 统一行间距 */
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 20px;
     line-height: 1.4;
-    padding-left: 15px;
-    border-left: 4px solid rgba(255,255,255,0.15);
+    padding-left: 0;
+    border-left: none; /* 去掉左边框 */
+    
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
 }
 
-/* Mobile 适配 */
+/* 自定义列表点 */
+.protocol-list li::before {
+    content: '•';
+    color: var(--accent);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* 特殊化颜色处理 (带辉光) */
+.col-title.allowed { color: #4ade80; text-shadow: 0 0 25px rgba(74, 222, 128, 0.4); }
+.col-title.avoid { color: #f87171; text-shadow: 0 0 25px rgba(248, 113, 113, 0.4); }
+.col-title.move { color: #d4b483; text-shadow: 0 0 25px rgba(212, 180, 131, 0.4); }
+
+
+/* --- 6. 底部侧边栏变为横向栏 (Bottom Timeline) --- */
+.timeline-sidebar {
+    width: 100%;
+    max-width: 1200px; 
+    background: transparent;
+    border: none;
+    /* 顶部淡淡的分割线，制造底座感 */
+    border-top: 1px solid rgba(255,255,255,0.05); 
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.sidebar-header {
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+    color: var(--accent);
+    font-family: var(--font-serif);
+    letter-spacing: 3px;
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+/* 时间轴容器：横向排列 */
+#timeline-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; 
+    gap: 40px; 
+}
+
+/* 时间轴节点 */
+.timeline-item {
+    display: flex;
+    flex-direction: column; /* 垂直排列 */
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    cursor: default;
+    min-width: 120px;
+}
+
+.timeline-item:hover {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-5px); 
+}
+
+.timeline-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    margin-right: 0; 
+    margin-bottom: 15px; /* 改为下边距 */
+    flex-shrink: 0;
+    transition: all 0.3s;
+    opacity: 0.5;
+}
+
+.timeline-item:hover .timeline-dot {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    opacity: 1;
+}
+
+.timeline-content { text-align: center; }
+
+.t-day { 
+    font-size: 0.85rem; 
+    color: var(--text-muted); 
+    display: block; 
+    margin-bottom: 5px; 
+    font-family: var(--font-serif);
+}
+
+.t-title { 
+    font-size: 0.95rem; 
+    color: var(--text-main); 
+    font-weight: 500; 
+    opacity: 0.8;
+}
+.timeline-item:hover .t-title { opacity: 1; }
+
+/* --- Mobile 适配 --- */
 @media (max-width: 1024px) {
-    .wild-dashboard { grid-template-columns: 1fr; }
-    .page-header { padding-left: 20px !important; text-align: center !important; }
-    .hero-section { padding: 20px; order: 1; }
-    .timeline-sidebar { order: 2; border-right: none; }
+    .wild-dashboard { padding: 0 10px; }
+    .hero-section { padding: 0; }
     
-    .hero-header-row { flex-direction: column; gap: 10px; height: auto; }
+    .hero-header-row { flex-direction: column; gap: 10px; height: auto; margin-bottom: 20px; }
     .hero-divider { display: none; }
+    
     .day-card.hero-mode .day-name, 
     .day-card.hero-mode .card-title { font-size: 2.2rem; white-space: normal; }
     
     .day-card.hero-mode .protocol-grid { grid-template-columns: 1fr; gap: 40px; }
-    .day-card.hero-mode .card-content { padding: 30px; }
+    .day-card.hero-mode .card-content { padding: 40px 20px; }
+    
+    /* 手机端时间轴改为横向滚动 */
+    #timeline-container { 
+        justify-content: flex-start; 
+        overflow-x: auto; 
+        padding-bottom: 20px;
+        flex-wrap: nowrap;
+        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
