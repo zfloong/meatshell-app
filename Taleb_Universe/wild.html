@@ -8,31 +8,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="css/cards.css"> <link rel="stylesheet" href="css/wild.css">  </head>
+    <link rel="stylesheet" href="css/style.css"> 
+    <link rel="stylesheet" href="css/cards.css"> 
+    <link rel="stylesheet" href="css/wild.css"> 
+</head>
 <body>
 
     <div class="wild-wrapper">
         
-        <div class="page-header" style="text-align: left; padding-left: 380px; margin-bottom: 20px;">
+        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
             <h1 class="page-title">狂野生长</h1>
         </div>
 
         <div class="wild-dashboard">
             
+            <main id="hero-container" class="hero-section">
+                </main>
+
             <aside class="timeline-sidebar">
-                <div class="sidebar-header">周期预览</div>
+                <div class="sidebar-header" style="text-align: center; margin-bottom: 30px;">—— 周期预览 ——</div>
                 <div id="timeline-container">
                     </div>
             </aside>
-
-            <main id="hero-container" class="hero-section">
-                </main>
 
         </div>
 
     </div>
 
-<template id="hero-template">
+    <template id="hero-template">
         <div class="day-card hero-mode">
             <div class="card-image"></div>
             <div class="card-content">
@@ -49,17 +52,18 @@
 
                 <div class="protocol-grid">
                     <div>
-                        <span class="col-title allowed">✅ 燃料 · 摄入</span>
+                        <span class="col-title allowed">✅ 能量 · 摄入</span>
                         <ul class="protocol-list list-diet-allow"></ul>
-                    </div>
-                    <div>
-                        <span class="col-title avoid">🚫 禁忌 · 毒药</span>
-                        <ul class="protocol-list list-diet-avoid"></ul>
                     </div>
                     <div>
                         <span class="col-title move">⚡ 运动 · 输出</span>
                         <ul class="protocol-list list-movement"></ul>
                     </div>
+                    <div>
+                        <span class="col-title avoid">🚫 禁忌 · 毒药</span>
+                        <ul class="protocol-list list-diet-avoid"></ul>
+                    </div>
+
                 </div>
             </div>
         </div>

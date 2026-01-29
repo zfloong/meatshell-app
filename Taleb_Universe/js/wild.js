@@ -15,9 +15,9 @@ const weekData = [
         subtitle: 'Heavy Lifts',
         icon: 'ri-hammer-line', 
         // 内容源自原来的周二，移到这里匹配“高强度”
-        diet_allowed: ['肉类 (羊肉/牛肉)', '动物内脏', '高质量碳水 (训练后)'],
-        diet_avoid: ['低脂饮食', '加工蛋白棒'],
-        movement: ['硬拉 (Deadlifts) - 极低组数', '深蹲/推举', '爆发力训练'],
+        diet_allowed: ['优质蛋白', '肉类/动物内脏', '高质量碳水 (训练后)'],
+        diet_avoid: ['低脂饮食', '超加工食品（重油重盐）'],
+        movement: ['8个小时+', '波比跳/俯卧撑', '爆发力训练'],
         remark: '“只有极度的压力才能引发身体的进化”。进行大重量训练，刺激骨密度和激素水平。', 
         img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop' 
     },
@@ -29,7 +29,7 @@ const weekData = [
         // 内容源自原来的周一，移到这里匹配“恢复”
         diet_allowed: ['跳过早餐 (间歇性禁食)', '地中海式正餐', '橄榄油/红酒'],
         diet_avoid: ['糖', '零食 (Snacking)', '种子油'],
-        movement: ['Zone 2 徒步/快走 (2小时+)', '爬楼梯 (代替电梯)'],
+        movement: ['低难度有氧*2', '慢走40分钟'],
         remark: '高强度后的主动恢复。模仿祖先在狩猎间隙的低能耗巡视。让身体燃烧脂肪储备。', 
         img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=1468&auto=format&fit=crop' 
     },
@@ -38,14 +38,25 @@ const weekData = [
         title: '低强度 · 斋戒日',
         subtitle: 'Orthodox Fast',
         icon: 'ri-leaf-line',
-        diet_allowed: ['素食 (Vegan)', '扁豆/豆类', '水/黑咖啡'],
+        diet_allowed: ['素食 (Vegan)、谷物', '仅晚餐进食 (Warrior Diet)', '茶/黑咖啡'],
         diet_avoid: ['所有动物制品 (肉/奶/蛋)', '油腻食物'],
-        movement: ['空腹快走', '伸展/瑜伽'],
+        movement: ['低难度有氧*2', '平板支撑/伸展'],
         remark: '遵循希腊东正教传统。人为制造蛋白质匮乏，激活自噬，清理体内垃圾。', 
         img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1470&auto=format&fit=crop' 
     },
     { 
         day: '周四', 
+        title: '匮乏 · 斋戒日', // 【优化】强调“匮乏” (Scarcity)
+        subtitle: 'Deep Fast',
+        icon: 'ri-contrast-drop-2-line',
+        diet_allowed: ['水', '仅晚餐进食', '素食晚餐'],
+        diet_avoid: ['零食', '娱乐性饮料'],
+        movement: ['空腹运动', '冥想'],
+        remark: '这是一周中最艰难的“随机压力”。通过饥饿让感官变得敏锐，食物在晚上会尝起来像上帝的恩赐。', 
+        img: 'https://images.unsplash.com/photo-1605160759367-2708b5329977?q=80&w=1470&auto=format&fit=crop' 
+    },
+    { 
+        day: '周五', 
         title: '稳态 · 巡猎日', // 【优化】改为“稳态” (Steady State) 更精准
         subtitle: 'Steady State',
         icon: 'ri-compass-3-line',
@@ -56,24 +67,13 @@ const weekData = [
         img: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?q=80&w=1470&auto=format&fit=crop' 
     },
     { 
-        day: '周五', 
-        title: '高强度 · 斋戒日', // 【优化】强调“匮乏” (Scarcity)
-        subtitle: 'Deep Fast',
-        icon: 'ri-contrast-drop-2-line',
-        diet_allowed: ['水', '仅晚餐进食 (Warrior Diet)', '简单的素食晚餐'],
-        diet_avoid: ['白天进食', '娱乐性饮料'],
-        movement: ['空腹运动', '冥想'],
-        remark: '这是一周中最艰难的“随机压力”。通过饥饿让感官变得敏锐，食物在晚上会尝起来像上帝的恩赐。', 
-        img: 'https://images.unsplash.com/photo-1605160759367-2708b5329977?q=80&w=1470&auto=format&fit=crop' 
-    },
-    { 
         day: '周六', 
-        title: '盛宴 · 社交日', // 【优化】强调“盛宴” (Feast)
+        title: '稳态 · 盛宴', // 【优化】强调“盛宴” (Feast)
         subtitle: 'The Feast',
         icon: 'ri-goblet-line',
-        diet_allowed: ['你想吃的一切', '红酒', '面包'],
+        diet_allowed: ['你想吃的一切', '超加工食品', '零食'],
         diet_avoid: ['独自进食', '罪恶感'],
-        movement: ['社交活动', '跳舞', '随意运动'],
+        movement: ['社交活动', '跳舞', '低难度有氧*2 + 随意运动'],
         remark: '“只有当你能享受盛宴时，斋戒才有意义”。打破适应性，享受林迪效应筛选出的美食。', 
         img: 'https://images.unsplash.com/photo-1529562726359-291583d726b0?q=80&w=1470&auto=format&fit=crop' 
     },
