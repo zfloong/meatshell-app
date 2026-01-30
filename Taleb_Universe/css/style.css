@@ -1,33 +1,40 @@
 /* =========================================
-   1. 全局基调 (The Foundation)
+   1. 全局基调 (The Cinematic Foundation)
    ========================================= */
 :root {
-    --bg-dark: #0a0b0e;       
-    --bg-panel: #14161a;      
+    /* 背景不是死黑，而是带有极微弱蓝调的深空黑，更有质感 */
+    --bg-deep: #050507;       
+    --bg-center: #1a1d24;      
+    
+    /* 升级后的“流动金” */
     --accent: #d4b483;        
-    --accent-dim: rgba(212, 180, 131, 0.4);
+    --gold-gradient: linear-gradient(135deg, #f3e7e9 0%, #e3eeff 15%, #d4b483 50%, #8b6c42 100%);
+    /* 或者更低调的香槟金渐变 */
+    --text-gold-gradient: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+
     --text-main: #e0e0e0;
-    --text-muted: #8b949e;
-    --border: rgba(255, 255, 255, 0.08);
+    --text-muted: #86868b; /* Apple 风格的灰色 */
+    
     --font-serif: 'Noto Serif SC', serif;
-    --font-sans: 'Roboto', sans-serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
     margin: 0;
-    background-color: var(--bg-dark);
+    background-color: var(--bg-deep);
     color: var(--text-main);
     font-family: var(--font-sans);
     min-height: 100vh;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
     overflow-x: hidden;
-    
-    /* 【关键修改】减少顶部留白，因为去掉了语录横幅 */
     padding-top: 80px; 
+
+    /* 【核心升级】背景不再是平铺噪点，而是深邃的聚光灯效果 */
+    background-image: radial-gradient(circle at 50% 30%, #1a1d24 0%, #050507 70%);
+    background-attachment: fixed; /* 滚动时背景不动，增加高级感 */
 }
 
 /* =========================================
-   2. 顶部容器 (Fixed Header)
+   2. 顶部导航 (Glass Header)
    ========================================= */
 #global-header {
     position: fixed;
@@ -35,53 +42,50 @@ body {
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: rgba(10, 11, 14, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-    /* 移除 box-shadow 或改小，视喜好而定 */
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    /* 极度通透的毛玻璃 */
+    background: rgba(5, 5, 7, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Timeline 组件样式已移除 (已在 global.js 中备份数据) 
-*/
-
-/* =========================================
-   3. 导航栏 (Navigation)
-   ========================================= */
 .nav-bar {
-    height: 70px; /* 稍微增加高度，更有分量 */
+    height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 50px;
+    gap: 60px; /* 间距拉大 */
 }
 
 .nav-link {
     text-decoration: none;
     color: var(--text-muted);
-    font-size: 1.15rem; 
-    font-weight: 700; 
-    text-transform: uppercase;
+    font-size: 0.95rem; /* 字体改小，更显精致 */
+    font-weight: 500; 
     letter-spacing: 1px;
-    transition: color 0.3s ease;
-    position: relative;
-    font-family: var(--font-serif); 
+    transition: all 0.3s ease;
+    font-family: var(--font-sans); 
 }
 
 .nav-link:hover, .nav-link.active {
-    color: var(--accent);
+    color: #fff; /* 纯白高亮 */
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
 }
 
-/* 激活状态下的小金点 */
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -8px; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: 5px;
-    height: 5px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--accent);
+/* 去掉原本的小金点，改用文字发光，更现代 */
+.nav-link.active::after { display: none; }
+
+/* =========================================
+   3. 通用排版工具
+   ========================================= */
+h1, h2, h3 { font-family: var(--font-serif); font-weight: 700; margin: 0; }
+p { line-height: 1.8; margin-bottom: 1.5rem; }
+
+/* 金色渐变文字类 */
+.text-gradient-gold {
+    background: var(--text-gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
 }
