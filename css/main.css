@@ -1,50 +1,87 @@
-/* :root 定义 CSS 变量（全局颜色池）。
-   修改这里的颜色，整个网页的配色都会跟着变。
+/* =========================================
+   FlyLoong Navigation - Cinematic Style
+   ========================================= */
+
+/* 1. 日间模式 (Light Mode) 
+   你表示满意，所以我保留了原本清爽的风格，
+   只微调了背景，让它稍微干净一点。
 */
 :root {
-  --bg: #f8fafc; /* 背景色：浅灰白 */
-  --card-bg: rgba(255, 255, 255, 0.65); /* 卡片背景：白色半透明 */
-  --nav-bg: rgba(255, 255, 255, 0.85); /* 导航栏背景 */
-  --text: #1e293b; /* 文字颜色：深灰 */
-  --primary: #6366f1; /* 主题色：紫色 */
-  --secondary: #8b5cf6; /* 辅助色：浅紫 */
-  --border: rgba(0, 0, 0, 0.06); /* 边框颜色 */
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* 阴影 */
+  --bg: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.75); /*稍微提高一点不透明度，防止太乱*/
+  --nav-bg: rgba(255, 255, 255, 0.85);
+  --text: #1e293b; 
+  --text-sub: #64748b;
+  --primary: #000000; /* 日间保留紫色，或者你也可以改成金色 */
+  --border: rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --glass: blur(20px);
 }
 
-/* 深色模式适配 */
+/* 2. 黑夜模式 (Cinematic Dark / Black Gold) 
+   【核心重构区域】
+*/
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f172a; /* 深色背景 */
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --nav-bg: rgba(15, 23, 42, 0.85);
-    --text: #e2e8f0; /* 文字变白 */
+    /* 背景：纯黑与深灰的交响 */
+    --bg: #000000; 
+    
+    /* 卡片：极度通透的黑水晶 */
+    --card-bg: rgba(30, 30, 30, 0.4); 
+    
+    /* 导航：深色毛玻璃 */
+    --nav-bg: rgba(0, 0, 0, 0.6);
+    
+    /* 文字：Apple Watch 风格的亮白与高级灰 */
+    --text: #f5f5f7;
+    --text-sub: #86868b;
+    
+    /* 主题色：【核心】流沙金 (替代原来的紫色) */
+    --primary: #d4b483; 
+    
+    /* 边框：极细微的白光 */
     --border: rgba(255, 255, 255, 0.08);
+    
+    /* 阴影：深邃的氛围光 */
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 }
 
-/* 初始化所有元素，去掉默认边距 */
+/* =========================================
+   全局样式重置
+   ========================================= */
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box; /* 宽度包含内边距和边框 */
+  box-sizing: border-box;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  padding-top: 80px;
+  transition: background-color 0.3s ease;
   
-  /* 背景装饰：紫色光晕 */
+  /* 默认日间背景装饰 */
   background-image:
-    radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.12) 0%, transparent 25%),
-    radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.12) 0%, transparent 25%);
-  
-  padding-top: 80px; /* 留出顶部导航栏的空间 */
+    radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.05) 0%, transparent 25%),
+    radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.05) 0%, transparent 25%);
 }
 
-/* --- 顶部固定导航栏 --- */
+/* 【核心】黑夜模式背景重写：深空聚光灯 */
+@media (prefers-color-scheme: dark) {
+  body {
+    /* 模拟舞台顶部打下来的光，制造纵深感 */
+    background-image: radial-gradient(circle at 50% 0%, #1c1c1e 0%, #000000 85%);
+    background-attachment: fixed; /* 滚动时背景不动，增加高级感 */
+  }
+}
+
+/* =========================================
+   组件：导航栏
+   ========================================= */
 .navbar {
   position: fixed;
   top: 0;
@@ -52,14 +89,14 @@ body {
   width: 100%;
   height: 70px;
   background: var(--nav-bg);
-  backdrop-filter: blur(20px); /* 毛玻璃模糊效果 */
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
   border-bottom: 1px solid var(--border);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
 }
 
 .nav-container {
@@ -69,64 +106,69 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3rem;
 }
 
-/* 导航按钮容器 */
 .nav-tabs {
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto; /* 手机端支持横向滑动 */
+  overflow-x: auto;
   scrollbar-width: none;
   padding: 0.5rem 0;
 }
+.nav-tabs::-webkit-scrollbar { display: none; }
 
-.nav-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-/* 导航按钮样式 */
+/* 导航按钮 */
 .tab-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent; /* 预留边框位置 */
   color: var(--text);
   font-size: 0.95rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 12px;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px; /* 胶囊形状更现代 */
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   opacity: 0.7;
 }
 
 .tab-btn:hover {
-  background: rgba(99, 102, 241, 0.1);
   opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* 激活状态的按钮 */
+/* 激活状态：日间紫/夜间金 */
 .tab-btn.active {
   background: var(--primary);
-  color: white;
+  color: #fff; /* 文字永远白色 */
   opacity: 1;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
-/* --- 主体内容 --- */
+/* 黑夜模式下的激活态微调：发光字+透底 (可选，目前用实色填充更醒目) */
+@media (prefers-color-scheme: dark) {
+  .tab-btn.active {
+    color: #000; /* 金色背景配黑色文字更像黑金 */
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(212, 180, 131, 0.4); /* 金色光晕 */
+  }
+}
+
+/* =========================================
+   组件：搜索区
+   ========================================= */
 .main-content {
   max-width: 1280px;
   margin: 2rem auto;
   padding: 0 1rem;
 }
 
-/* --- 搜索区样式 --- */
 .search-wrapper {
   max-width: 600px;
-  margin: 0 auto 2.5rem auto;
+  margin: 0 auto 3rem auto;
   text-align: center;
 }
 
@@ -135,14 +177,14 @@ body {
   justify-content: center;
   align-items: center;
   gap: 1.0rem;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1.2rem;
 }
 
 .divider {
   width: 1px;
   height: 16px;
   background-color: var(--text);
-  opacity: 0.15;
+  opacity: 0.2;
   margin: 0 0.2rem;
 }
 
@@ -151,115 +193,110 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   transition: all 0.2s ease;
-  opacity: 0.7;
-  text-decoration: none;
+  opacity: 0.8;
+  background: rgba(255,255,255,0.05); /* 微弱背景 */
 }
-
 .mini-icon:hover {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255,255,255,0.15);
   transform: scale(1.1);
 }
-
-@media (prefers-color-scheme: dark) {
-  .mini-icon:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-}
-
 .mini-icon img {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 20px;
+  height: 20px;
 }
 
-/* 搜索引擎按钮 */
+/* 引擎切换按钮 */
 .engine-btn {
   background: transparent;
-  border: none;
+  border: 1px solid var(--border);
   color: var(--text);
   opacity: 0.6;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  padding: 4px 12px;
+  padding: 6px 16px;
   border-radius: 20px;
   transition: all 0.2s;
-  font-weight: 500;
 }
-
-.engine-btn:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.05);
-}
-
+.engine-btn:hover { opacity: 1; border-color: var(--primary); }
 .engine-btn.active {
   opacity: 1;
   background: var(--text);
   color: var(--bg);
+  border-color: var(--text);
   font-weight: 600;
 }
-
+/* 黑夜模式下引擎按钮激活态：金色 */
 @media (prefers-color-scheme: dark) {
   .engine-btn.active {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
   }
 }
 
+/* 搜索框：毛玻璃化 */
 .search-box {
   position: relative;
   display: flex;
   align-items: center;
 }
-
 .search-input {
   width: 100%;
-  padding: 1rem 1.2rem;
-  padding-right: 3rem;
-  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  padding-right: 3.5rem;
+  border-radius: 20px;
   border: 1px solid var(--border);
+  
+  /* 玻璃质感 */
   background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
   color: var(--text);
   font-size: 1rem;
   outline: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
   transition: all 0.3s ease;
 }
-
 .search-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
-  background: rgba(65, 64, 66, 0.251);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+/* 黑夜模式聚焦光晕：金色 */
+@media (prefers-color-scheme: dark) {
+  .search-input:focus {
+    box-shadow: 0 0 30px rgba(212, 180, 131, 0.1); /* 金色微光 */
+  }
 }
 
 .search-btn {
   position: absolute;
-  right: 10px;
+  right: 15px;
   background: transparent;
   border: none;
   color: var(--primary);
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   cursor: pointer;
-  padding: 5px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
 }
+.search-btn:hover { opacity: 1; }
 
-/* --- 分类动画 --- */
+/* =========================================
+   组件：内容板块
+   ========================================= */
 .category-section {
   display: none;
-  animation: fadeIn 0.4s ease;
+  animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-
-.category-section.active {
-  display: block;
-}
-
+.category-section.active { display: block; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -268,131 +305,117 @@ body {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  padding-left: 0.5rem;
 }
-
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
-/* --- Grid 网格布局 --- */
+/* Grid 网格 */
 .grid {
   display: grid;
-  /* 响应式设置：最小宽度 220px，放不下就换行 */
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
+/* 卡片：核心质感 */
 .card {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 1rem;
+  gap: 1rem;
+  padding: 1.1rem;
+  
+  /* 玻璃背景 */
   background: var(--card-bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   text-decoration: none;
   color: var(--text);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-  overflow: hidden;
 }
 
 .card:hover {
   transform: translateY(-4px);
+  /* 悬停时加亮背景 */
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
   border-color: var(--primary);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
+/* 黑夜模式悬停：深色加亮 */
 @media (prefers-color-scheme: dark) {
   .card:hover {
-    background: rgba(40, 50, 70, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5); /* 更深的阴影 */
   }
 }
 
 .card img {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   object-fit: cover;
-  flex-shrink: 0;
 }
 
 .card-info h3 {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.4;
+  margin-bottom: 2px;
 }
 
-.card-info p {
-  font-size: 0.75rem;
-  opacity: 0.6;
-  margin-top: 2px;
-}
-
-/* --- Tools 区域折叠样式 --- */
+/* --- 折叠组件 (Tools) --- */
 details {
   background: var(--card-bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   margin-bottom: 1rem;
-  overflow: hidden; /* 保证折叠时内容不溢出 */
+  overflow: hidden;
   transition: all 0.3s ease;
 }
 
 summary {
-  padding: 1rem;
+  padding: 1.2rem;
   font-weight: 600;
-  font-size: 1rem;
   cursor: pointer;
-  list-style: none; /* 隐藏默认三角 */
+  list-style: none;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: space-between; /* 标题左对齐，箭头右对齐 */
-  user-select: none; /* 防止双击选中文本 */
+  user-select: none;
   transition: background 0.2s;
 }
-
-/* 悬停 summary 时的背景反馈 */
 summary:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(125, 125, 125, 0.05);
 }
-
-@media (prefers-color-scheme: dark) {
-  summary:hover { background: rgba(255, 255, 255, 0.05); }
-}
-
-/* 自定义折叠箭头 (使用 RemixIcon 字体) */
 summary::after {
-  content: '\ea4e'; /* ri-arrow-down-s-line */
+  content: '\ea4e'; /* RemixIcon arrow */
   font-family: 'remixicon';
   font-size: 1.2rem;
-  color: var(--text);
-  opacity: 0.6;
-  transition: transform 0.3s ease;
+  color: var(--text-sub);
+  transition: transform 0.3s;
 }
+details[open] summary::after { transform: rotate(180deg); }
+summary::-webkit-details-marker { display: none; }
 
-/* 展开状态下旋转箭头 */
-details[open] summary::after {
-  transform: rotate(180deg);
-}
-
-/* 隐藏 Chrome/Safari 默认的折叠标记 */
-summary::-webkit-details-marker {
-  display: none;
-}
-
-/* 折叠内容里的 Grid 微调 */
 details .grid {
-  padding: 0 1rem 1rem 1rem;
-  margin-top: 0.5rem;
-  /* 只有 details 里面的 grid 不需要默认的 padding，因为 details 有自己的内边距逻辑 */
+  padding: 0 1.2rem 1.5rem 1.2rem;
+  margin-top: 0;
 }
 
 footer {
   text-align: center;
-  padding: 3rem 0;
-  opacity: 0.5;
+  padding: 4rem 0;
+  color: var(--text-sub);
   font-size: 0.85rem;
+  letter-spacing: 1px;
 }
