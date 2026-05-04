@@ -35,14 +35,14 @@
           "name": "✨ AI Honey",
           "isOpen": true,
           "items": [
+            { "title": "狂野生长", "url": "Taleb_Universe/diet.html", "icon": "images/喜欢.svg" },
             { "title": "Gemini", "url": "https://gemini.google.com/", "icon": "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" },
             { "title": "Grok", "url": "https://grok.com/", "icon": "https://www.google.com/s2/favicons?domain=grok.com&sz=64" },
-            { "title": "DeepSeek", "url": "https://chat.deepseek.com/", "icon": "https://www.google.com/s2/favicons?domain=chat.deepseek.com&sz=64" },
-            { "title": "千问 Qwen", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
+             { "title": "千问 Qwen", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "腾讯混元", "url": "https://yuanbao.tencent.com/", "icon": "https://www.google.com/s2/favicons?domain=yuanbao.tencent.com&sz=64" },
-            { "title": "Google AI Studio", "url": "https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-preview", "icon": "https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=64" },
+            { "title": "DeepSeek", "url": "https://chat.deepseek.com/", "icon": "https://www.google.com/s2/favicons?domain=chat.deepseek.com&sz=64" },
             { "title": "LM 模型竞技场", "url": "https://lmarena.ai/zh", "icon": "https://www.google.com/s2/favicons?domain=lmarena.ai&sz=64" },
-            { "title": "GitHub Claude", "url": "https://github.com/copilot", "icon": "https://www.google.com/s2/favicons?domain=github.com&sz=64" },
+            { "title": "Google AI Studio", "url": "https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-preview", "icon": "https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=64" },
             { "title": "HuggingChat", "url": "https://huggingface.co/chat/models", "icon": "https://www.google.com/s2/favicons?domain=huggingface.co&sz=64" },
             { "title": "Copilot", "url": "https://copilot.microsoft.com/", "icon": "https://copilot.microsoft.com/favicon.ico" }
           ]
@@ -72,13 +72,14 @@
           "name": "⭐ Go-To Tools",
           "isOpen": true,
           "items": [
-            { "title": "FMHY", "url": "https://fmhy.net/", "icon": "https://www.google.com/s2/favicons?domain=fmhy.net&sz=64" },
+            { "title": "FMHY", "url": "https://fmhy.net/", "icon": "images/fmhy-play.svg" },
             { "title": "小豆子", "url": "https://www.doubao.com/chat/", "icon": "https://www.google.com/s2/favicons?domain=www.doubao.com&sz=64" },
             { "title": "MIMO 翻译", "url": "https://aistudio.xiaomimimo.com/#/", "icon": "https://www.google.com/s2/favicons?domain=aistudio.xiaomimimo.com&sz=64" },
             { "title": "文心一言", "url": "https://yiyan.baidu.com/", "icon": "https://www.google.com/s2/favicons?domain=yiyan.baidu.com&sz=64" },
             { "title": "Google翻译", "url": "https://translate.google.com/", "icon": "https://www.google.com/s2/favicons?domain=translate.google.com&sz=64" },
             { "title": "Z-Library", "url": "https://zh.z-library.sk/", "icon": "https://www.google.com/s2/favicons?domain=zh.z-library.sk&sz=64" },
             { "title": "樊登读书", "url": "https://www.dushu365.com/", "icon": "https://www.google.com/s2/favicons?domain=dushu365.com&sz=64" },
+            { "title": "PDF24 Tools", "url": "https://tools.pdf24.org/zh/", "icon": "https://www.google.com/s2/favicons?domain=tools.pdf24.org&sz=64" },
             { "title": "CloudConvert", "url": "https://cloudconvert.com/", "icon": "https://www.google.com/s2/favicons?domain=cloudconvert.com&sz=64" }
           ]
         },
