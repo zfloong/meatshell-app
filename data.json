@@ -39,7 +39,7 @@
             { "title": "Gemini", "url": "https://gemini.google.com/", "icon": "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" },
             { "title": "Grok", "url": "https://grok.com/", "icon": "https://www.google.com/s2/favicons?domain=grok.com&sz=64" },
             { "title": "DeepSeek", "url": "https://chat.deepseek.com/", "icon": "https://www.google.com/s2/favicons?domain=chat.deepseek.com&sz=64" },
-            { "title": "Qwen.dome", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
+            { "title": "QwenDome", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "LM 模型竞技场", "url": "https://lmarena.ai/zh", "icon": "https://www.google.com/s2/favicons?domain=lmarena.ai&sz=64" },
             { "title": "Google AI Studio", "url": "https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-preview", "icon": "https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=64" },
             { "title": "腾讯混元", "url": "https://yuanbao.tencent.com/", "icon": "https://www.google.com/s2/favicons?domain=yuanbao.tencent.com&sz=64" },
@@ -78,11 +78,13 @@
           "items": [
             { "title": "FMHY", "url": "https://fmhy.net/", "icon": "images/fmhy-play.svg" },
             { "title": "Google翻译", "url": "https://translate.google.com/", "icon": "https://www.google.com/s2/favicons?domain=translate.google.com&sz=64" },
+            { "title": "Cloudflare", "url": "https://dash.cloudflare.com/", "icon": "https://www.google.com/s2/favicons?domain=dash.cloudflare.com&sz=64" },
+            { "title": "Cloudflare ESNI 测试", "url": "https://www.cloudflare.com/zh-cn/ssl/encrypted-sni/#results", "icon": "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=64" },
             { "title": "樊登读书", "url": "https://www.dushu365.com/", "icon": "https://www.google.com/s2/favicons?domain=dushu365.com&sz=64" },
             { "title": "微信读书", "url": "https://weread.qq.com/web/shelf", "icon": "https://rescdn.qqmail.com/node/wr/wrpage/style/images/independent/favicon/favicon_48h.png" },
-            { "title": "PDF24 Tools", "url": "https://tools.pdf24.org/zh/", "icon": "https://www.google.com/s2/favicons?domain=tools.pdf24.org&sz=64" },
-            { "title": "Cloudflare", "url": "https://dash.cloudflare.com/", "icon": "https://www.google.com/s2/favicons?domain=dash.cloudflare.com&sz=64" },
-            { "title": "CloudConvert", "url": "https://cloudconvert.com/", "icon": "https://www.google.com/s2/favicons?domain=cloudconvert.com&sz=64" }
+            
+            { "title": "CloudConvert", "url": "https://cloudconvert.com/", "icon": "https://www.google.com/s2/favicons?domain=cloudconvert.com&sz=64" },
+            { "title": "PDF24 Tools", "url": "https://tools.pdf24.org/zh/", "icon": "https://www.google.com/s2/favicons?domain=tools.pdf24.org&sz=64" }
           ]
         },
         {
@@ -93,7 +95,7 @@
             { "title": "Unsplash-摄影", "url": "https://unsplash.com/", "icon": "https://unsplash.com/favicon.ico" },
             { "title": "Icon-Alibaba", "url": "https://www.iconfont.cn/", "icon": "https://www.google.com/s2/favicons?domain=iconfont.cn&sz=64" },
             { "title": "Icon-ByteDance", "url": "https://iconpark.oceanengine.com/", "icon": "https://www.google.com/s2/favicons?domain=iconpark.oceanengine.com&sz=64" },
-            { "title": "Flaticon", "url": "https://www.flaticon.com/", "icon": "https://www.google.com/s2/favicons?domain=flaticon.com&sz=64" }
+            { "title": "Icon-Flaticon", "url": "https://www.flaticon.com/", "icon": "https://www.google.com/s2/favicons?domain=flaticon.com&sz=64" }
           ]
         },
         {
