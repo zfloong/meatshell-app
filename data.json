@@ -41,7 +41,6 @@
             { "title": "DeepSeek", "url": "https://chat.deepseek.com/", "icon": "https://www.google.com/s2/favicons?domain=chat.deepseek.com&sz=64" },
             { "title": "Qwen.dome", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "LM 模型竞技场", "url": "https://lmarena.ai/zh", "icon": "https://www.google.com/s2/favicons?domain=lmarena.ai&sz=64" },
-            
             { "title": "Google AI Studio", "url": "https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-preview", "icon": "https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=64" },
             { "title": "腾讯混元", "url": "https://yuanbao.tencent.com/", "icon": "https://www.google.com/s2/favicons?domain=yuanbao.tencent.com&sz=64" },
             { "title": "HuggingChat", "url": "https://huggingface.co/chat/models", "icon": "https://www.google.com/s2/favicons?domain=huggingface.co&sz=64" },
@@ -151,7 +150,7 @@
         { "title": "Hugging Face", "url": "https://huggingface.co/", "icon": "https://www.google.com/s2/favicons?domain=huggingface.co&sz=64" },
         { "title": "Civitai", "url": "https://civitai.com/", "icon": "https://www.google.com/s2/favicons?domain=civitai.com&sz=64" },
         { "title": "Debian 归档镜像站", "url": "https://cdimage.debian.org/mirror/cdimage/archive/", "icon": "https://www.google.com/s2/favicons?domain=debian.org&sz=64" },
-        { "title": "Spaceship", "url": "https://www.spaceship.com/zh/", "icon": "https://www.spaceship.com/favicon.ico" },
+        { "title": "Spaceship", "url": "https://www.spaceship.com/zh/", "icon": "https://spaceship-cdn.com/static/spaceship/favicon/spaceship-icon.svg" },
         { "title": "Gitee", "url": "https://gitee.com/explore", "icon": "https://gitee.com/favicon.ico" },
         { "title": "魔塔社区", "url": "https://www.modelscope.cn/home", "icon": "https://g.alicdn.com/sail-web/maas/2.13.2/favicon/128.ico" }
       ]
