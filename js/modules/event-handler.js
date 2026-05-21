@@ -237,6 +237,32 @@ function clearSearchHistory() {
   savePreference('searchHistory', []);
 }
 
+function bindSectionToggleEvents() {
+  const titles = document.querySelectorAll('.section-group-title');
+
+  titles.forEach(title => {
+    const sectionId = title.textContent.trim();
+    const savedState = getSavedPreference(`section_${sectionId}`);
+    if (savedState === false) {
+      title.classList.add('collapsed');
+      const grid = title.nextElementSibling;
+      if (grid && grid.classList.contains('grid')) {
+        grid.classList.add('grid-collapsed');
+      }
+    }
+
+    title.addEventListener('click', () => {
+      title.classList.toggle('collapsed');
+      const grid = title.nextElementSibling;
+      if (grid && grid.classList.contains('grid')) {
+        grid.classList.toggle('grid-collapsed');
+      }
+      const isCollapsed = title.classList.contains('collapsed');
+      savePreference(`section_${sectionId}`, !isCollapsed);
+    });
+  });
+}
+
 /**
  * 绑定 Tab 切换事件
  * 为导航标签页添加点击事件，切换内容板块
@@ -283,4 +309,4 @@ function bindTabEvents() {
   });
 }
 
-export { bindSearchEvents, bindTabEvents, savePreference, getSavedPreference, clearAllPreferences };
+export { bindSearchEvents, bindTabEvents, bindSectionToggleEvents, savePreference, getSavedPreference, clearAllPreferences };

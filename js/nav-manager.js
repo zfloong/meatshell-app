@@ -5,7 +5,7 @@
 
 import { fetchData } from './modules/data-service.js';
 import { renderSearch, renderNavAndContent } from './modules/renderer.js';
-import { bindSearchEvents, bindTabEvents } from './modules/event-handler.js';
+import { bindSearchEvents, bindTabEvents, bindSectionToggleEvents } from './modules/event-handler.js';
 import { showLoading, hideLoading, showError, initNetworkListeners } from './modules/error-handler.js';
 
 /**
@@ -40,9 +40,9 @@ function initPage(data) {
   renderSearch(data.search);
   renderNavAndContent(data.categories);
   
-  // 渲染完 HTML 后，再绑定点击事件
   bindSearchEvents(data.search);
   bindTabEvents();
+  bindSectionToggleEvents();
 }
 
 /**

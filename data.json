@@ -26,14 +26,11 @@
   "categories": [
    {
       "id": "ai",
-      "navTitle": "Everyday",
+      "navTitle": "StudyGroup",
       "icon": "ri-sparkling-2-fill",
-      "sectionTitle": "Everyday", 
-      "titleColor": "#8b5cf6",
-      "groups": [
+      "sections": [
         {
-          "name": "✨ AI Honey",
-          "isOpen": true,
+          "name": "✨ AI Studio",
           "items": [
             { "title": "狂野生长", "url": "Taleb_Universe/diet.html", "icon": "images/喜欢.svg" },
             { "title": "Gemini", "url": "https://gemini.google.com/", "icon": "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" },
@@ -49,7 +46,6 @@
         },
         {
           "name": "🍃 研习之路",
-          "isOpen": true,
           "items": [
             { "title": "GitHub Home", "url": "https://github.com/dashboard", "iconSymbol": "ri-github-fill", "iconColor": "var(--text)" },
             { "title": "Bilibili", "url": "https://www.bilibili.com/", "icon": "https://www.bilibili.com/favicon.ico" },
@@ -69,12 +65,9 @@
       "id": "tools",
       "navTitle": "Tools",
       "icon": "ri-tools-line",
-      "sectionTitle": "工欲善其事 必先利其器",
-      "titleColor": "#f59e0b",
-      "groups": [
+      "sections": [
         {
           "name": "⭐ Go-To Tools",
-          "isOpen": true,
           "items": [
             { "title": "FMHY", "url": "https://fmhy.net/", "icon": "images/fmhy-play.svg" },
             { "title": "Google翻译", "url": "https://translate.google.com/", "icon": "https://www.google.com/s2/favicons?domain=translate.google.com&sz=64" },
@@ -89,7 +82,6 @@
         },
         {
           "name": "🎨 设计与素材",
-          "isOpen": false,
           "items": [
             { "title": "WallHaven-壁纸", "url": "https://wallhaven.cc/", "icon": "https://wallhaven.cc/favicon.ico" },
             { "title": "Unsplash-摄影", "url": "https://unsplash.com/", "icon": "https://unsplash.com/favicon.ico" },
@@ -100,7 +92,6 @@
         },
         {
           "name": "🧩 其他",
-          "isOpen": false,
           "items": [
             
             { "title": "Hero SMS", "url": "https://hero-sms.com/", "icon": "https://www.google.com/s2/favicons?domain=hero-sms.com&sz=64" },
@@ -144,7 +135,7 @@
     },
     {
       "id": "opensource",
-      "navTitle": "开发与资源库",
+      "navTitle": "Dev & Res",
       "icon": "ri-open-source-line",
       "sectionTitle": "资源库",
       "titleColor": "#ec4899",
@@ -159,7 +150,7 @@
     },
     {
       "id": "academic",
-      "navTitle": "学术与前沿",
+      "navTitle": "Academic",
       "icon": "ri-graduation-cap-fill",
       "sectionTitle": "学术与前沿",
       "titleColor": "#2dd4bf",
@@ -173,7 +164,7 @@
     },
     {
       "id": "life",
-      "navTitle": "娱乐与生活",
+      "navTitle": "Fun & Life",
       "icon": "ri-cup-line",
       "sectionTitle": "娱乐与生活",
       "titleColor": "#f43f5e",

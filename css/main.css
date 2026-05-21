@@ -168,7 +168,7 @@ body {
 
 .search-wrapper {
   max-width: 600px;
-  margin: 0 auto 3rem auto;
+  margin: 0 auto 0.1rem auto;
   text-align: center;
 }
 
@@ -310,9 +310,41 @@ body {
   padding-left: 0.5rem;
 }
 .section-title {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.5px;
+}
+
+.section-group-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0.6rem 0.5rem;
+  margin-top: 0.5rem;
+  opacity: 0.85;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+.section-group-title:hover {
+  opacity: 1;
+}
+.section-group-title::after {
+  content: '\ea4e';
+  font-family: 'remixicon';
+  font-size: 1.1rem;
+  color: var(--text-sub);
+  transition: transform 0.3s;
+}
+.section-group-title.collapsed::after {
+  transform: rotate(-90deg);
+}
+
+.grid.grid-collapsed {
+  display: none;
 }
 
 /* Grid 网格 */
@@ -371,47 +403,6 @@ body {
   font-weight: 500;
   line-height: 1.4;
   margin-bottom: 2px;
-}
-
-/* --- 折叠组件 (Tools) --- */
-details {
-  background: var(--card-bg);
-  backdrop-filter: var(--glass);
-  -webkit-backdrop-filter: var(--glass);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  margin-bottom: 1rem;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-summary {
-  padding: 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-  transition: background 0.2s;
-}
-summary:hover {
-  background: rgba(125, 125, 125, 0.05);
-}
-summary::after {
-  content: '\ea4e'; /* RemixIcon arrow */
-  font-family: 'remixicon';
-  font-size: 1.2rem;
-  color: var(--text-sub);
-  transition: transform 0.3s;
-}
-details[open] summary::after { transform: rotate(180deg); }
-summary::-webkit-details-marker { display: none; }
-
-details .grid {
-  padding: 0 1.2rem 1.5rem 1.2rem;
-  margin-top: 0;
 }
 
 footer {

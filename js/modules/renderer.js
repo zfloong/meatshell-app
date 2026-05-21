@@ -125,49 +125,38 @@ function renderNavAndContent(categories) {
     section.id = cat.id;
     section.className = `category-section ${index === 0 ? 'active' : ''}`;
 
-    // 创建section header
-    const sectionHeader = document.createElement('div');
-    sectionHeader.className = 'section-header';
-    sectionHeader.innerHTML = `
-      <i class="${cat.icon}" style="font-size: 1.8rem; color: ${cat.titleColor};"></i>
-      <div class="section-title">${cat.sectionTitle}</div>
-    `;
-    section.appendChild(sectionHeader);
-
-    // 判断是否有子分组 (Tools 专属逻辑)
-    if (cat.groups) {
-      // 如果有分组 (比如 Tools)
-      cat.groups.forEach(group => {
-        const details = document.createElement('details');
-        if (group.isOpen) {
-          details.open = true;
-        }
-
-        const summary = document.createElement('summary');
-        summary.textContent = group.name;
-        details.appendChild(summary);
+    if (cat.sections) {
+      cat.sections.forEach(sectionData => {
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'section-group-title';
+        sectionTitle.textContent = sectionData.name;
+        section.appendChild(sectionTitle);
 
         const grid = document.createElement('div');
         grid.className = 'grid';
-        
-        // 使用 DocumentFragment 创建卡片
+
         const cardsFragment = document.createDocumentFragment();
-        group.items.forEach(item => {
+        sectionData.items.forEach(item => {
           const cardHtml = renderCards([item]);
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = cardHtml.trim();
           cardsFragment.appendChild(tempDiv.firstElementChild);
         });
         grid.appendChild(cardsFragment);
-        details.appendChild(grid);
-        section.appendChild(details);
+        section.appendChild(grid);
       });
     } else {
-      // 普通板块 (比如 AI)
+      const sectionHeader = document.createElement('div');
+      sectionHeader.className = 'section-header';
+      sectionHeader.innerHTML = `
+        <i class="${cat.icon}" style="font-size: 1.8rem; color: ${cat.titleColor};"></i>
+        <div class="section-title">${cat.sectionTitle}</div>
+      `;
+      section.appendChild(sectionHeader);
+
       const grid = document.createElement('div');
       grid.className = 'grid';
-      
-      // 使用 DocumentFragment 创建卡片
+
       const cardsFragment = document.createDocumentFragment();
       cat.items.forEach(item => {
         const cardHtml = renderCards([item]);
