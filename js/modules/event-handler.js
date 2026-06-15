@@ -109,14 +109,15 @@ function initSearchHistory(searchInput, searchForm) {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--card-bg);
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 0 0 10px 10px;
     box-shadow: var(--shadow);
     z-index: 100;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
     display: none;
+    backdrop-filter: none;
   `;
   
   // 插入到搜索框下方
@@ -216,7 +217,7 @@ function saveSearchHistory(query) {
   filteredHistory.unshift(query);
   
   // 限制历史记录数量
-  const limitedHistory = filteredHistory.slice(0, 10);
+  const limitedHistory = filteredHistory.slice(0, 20);
   
   // 保存到本地存储
   savePreference('searchHistory', limitedHistory);
