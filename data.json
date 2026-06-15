@@ -32,16 +32,17 @@
         {
           "name": "✨ AI Studio",
           "items": [
-            { "title": "狂野生长", "url": "Taleb_Universe/diet.html", "icon": "images/喜欢.svg" },
             { "title": "Gemini", "url": "https://gemini.google.com/", "icon": "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64" },
             { "title": "Grok", "url": "https://grok.com/", "icon": "https://www.google.com/s2/favicons?domain=grok.com&sz=64" },
             { "title": "DeepSeek", "url": "https://chat.deepseek.com/", "icon": "https://www.google.com/s2/favicons?domain=chat.deepseek.com&sz=64" },
             { "title": "QwenDome", "url": "https://www.qianwen.com/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "LM 模型竞技场", "url": "https://lmarena.ai/zh", "icon": "https://www.google.com/s2/favicons?domain=lmarena.ai&sz=64" },
             { "title": "Google AI Studio", "url": "https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-preview", "icon": "https://www.google.com/s2/favicons?domain=aistudio.google.com&sz=64" },
+            { "title": "ChatGPT", "url": "https://chatgpt.com/", "icon": "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=64" },
             { "title": "腾讯混元", "url": "https://yuanbao.tencent.com/", "icon": "https://www.google.com/s2/favicons?domain=yuanbao.tencent.com&sz=64" },
             { "title": "HuggingChat", "url": "https://huggingface.co/chat/models", "icon": "https://www.google.com/s2/favicons?domain=huggingface.co&sz=64" },
             { "title": "Copilot", "url": "https://copilot.microsoft.com/", "icon": "https://copilot.microsoft.com/favicon.ico" }
+            
           ]
         },
         {
@@ -55,33 +56,47 @@
             { "title": "MIMO", "url": "https://aistudio.xiaomimimo.com/#/c", "icon": "images/mimo-gold-v2.svg" },
             { "title": "Qwen.ai", "url": "https://chat.qwen.ai/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "豆包", "url": "https://www.doubao.com/chat/", "icon": "https://www.google.com/s2/favicons?domain=www.doubao.com&sz=64" },
-            { "title": "文心一言", "url": "https://yiyan.baidu.com/", "icon": "https://www.google.com/s2/favicons?domain=yiyan.baidu.com&sz=64" },
-            { "title": "Claude", "url": "https://claude.ai/", "icon": "https://www.google.com/s2/favicons?domain=claude.ai&sz=64" }
+            { "title": "文心一言", "url": "https://yiyan.baidu.com/", "icon": "https://www.google.com/s2/favicons?domain=yiyan.baidu.com&sz=64" }
           ]
         }
       ]
     },
     {
       "id": "tools",
-      "navTitle": "Tools",
+      "navTitle": "CommonTools",
       "icon": "ri-tools-line",
       "sections": [
         {
-          "name": "⭐ Go-To Tools",
+          "name": "⭐ 常用工具",
           "items": [
+           
+            { "title": "Cloudflare", "url": "https://dash.cloudflare.com/", "icon": "https://www.google.com/s2/favicons?domain=dash.cloudflare.com&sz=64" },
             { "title": "FMHY", "url": "https://fmhy.net/", "icon": "images/fmhy-play.svg" },
             { "title": "Google翻译", "url": "https://translate.google.com/", "icon": "https://www.google.com/s2/favicons?domain=translate.google.com&sz=64" },
-            { "title": "Cloudflare", "url": "https://dash.cloudflare.com/", "icon": "https://www.google.com/s2/favicons?domain=dash.cloudflare.com&sz=64" },
-            { "title": "Cloudflare ESNI 测试", "url": "https://www.cloudflare.com/zh-cn/ssl/encrypted-sni/#results", "icon": "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=64" },
-            { "title": "樊登读书", "url": "https://www.dushu365.com/", "icon": "https://www.google.com/s2/favicons?domain=dushu365.com&sz=64" },
+            { "title": "DeepL翻译", "url": "https://www.deepl.com/zh/translator", "icon": "https://www.google.com/s2/favicons?domain=deepl.com&sz=64" },
             { "title": "微信读书", "url": "https://weread.qq.com/web/shelf", "icon": "https://rescdn.qqmail.com/node/wr/wrpage/style/images/independent/favicon/favicon_48h.png" },
-            
-            { "title": "CloudConvert", "url": "https://cloudconvert.com/", "icon": "https://www.google.com/s2/favicons?domain=cloudconvert.com&sz=64" },
-            { "title": "PDF24 Tools", "url": "https://tools.pdf24.org/zh/", "icon": "https://www.google.com/s2/favicons?domain=tools.pdf24.org&sz=64" }
+            { "title": "樊登读书", "url": "https://www.dushu365.com/", "icon": "https://www.google.com/s2/favicons?domain=dushu365.com&sz=64" }
+            ]
+        },
+        {
+          "name": "🌐 网络工具",
+          "items": [
+            { "title": "Cloudflare ESNI 测试", "url": "https://www.cloudflare.com/zh-cn/ssl/encrypted-sni/#results", "icon": "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=64" },
+            { "title": "IPCheck", "url": "https://ipcheck.ing/", "icon": "https://www.google.com/s2/favicons?domain=ipcheck.ing&sz=64" },
+            { "title": "IPLark", "url": "https://iplark.com/", "icon": "https://www.google.com/s2/favicons?domain=iplark.com&sz=64" },
+            { "title": "IPLeak", "url": "https://ipleak.net/", "icon": "https://www.google.com/s2/favicons?domain=ipleak.net&sz=64" },
+            { "title": "BrowserLeaks", "url": "https://browserleaks.com/", "icon": "https://www.google.com/s2/favicons?domain=browserleaks.com&sz=64" },
+            { "title": "Ping0-节点质量", "url": "https://ping0.cc/", "icon": "https://ping0.cc/favicon.ico" },
+            { "title": "ITDog Ping", "url": "https://www.itdog.cn/ping", "icon": "https://www.google.com/s2/favicons?domain=itdog.cn&sz=64" },
+            { "title": "Speedtest-Net", "url": "https://fiber.google.com/speedtest/", "icon": "https://fiber.google.com/favicon.ico" },
+            { "title": "Speedtest-CN", "url": "https://www.speedtest.cn/", "icon": "https://www.google.com/s2/favicons?domain=speedtest.net&sz=64" },
+            { "title": "中科大测速", "url": "https://test.ustc.edu.cn/", "icon": "https://www.google.com/s2/favicons?domain=test.ustc.edu.cn&sz=64" },
+            { "title": "域名监测", "url": "https://api.uouin.com/", "icon": "https://www.google.com/s2/favicons?domain=api.uouin.com&sz=64" },
+            { "title": "CF优选域名", "url": "https://cf.090227.xyz/", "icon": "https://www.google.com/s2/favicons?domain=cf.090227.xyz&sz=64" }
           ]
         },
         {
-          "name": "🎨 设计与素材",
+          "name": "🎨 设计素材",
           "items": [
             { "title": "WallHaven-壁纸", "url": "https://wallhaven.cc/", "icon": "https://wallhaven.cc/favicon.ico" },
             { "title": "Unsplash-摄影", "url": "https://unsplash.com/", "icon": "https://unsplash.com/favicon.ico" },
@@ -91,32 +106,27 @@
           ]
         },
         {
-          "name": "🧩 其他",
+          "name": "🧩 应用扩展",
           "items": [
-            
-            { "title": "Hero SMS", "url": "https://hero-sms.com/", "icon": "https://www.google.com/s2/favicons?domain=hero-sms.com&sz=64" },
-            { "title": "Edge扩展商店", "url": "https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home", "icon": "https://www.google.com/s2/favicons?domain=microsoftedge.microsoft.com&sz=64" },
+            { "title": "APKMirror", "url": "https://www.apkmirror.com/", "icon": "https://www.google.com/s2/favicons?domain=apkmirror.com&sz=64" },
+            { "title": "Edge商店", "url": "https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home", "icon": "https://www.google.com/s2/favicons?domain=microsoftedge.microsoft.com&sz=64" },
             { "title": "Chrome商店", "url": "https://chromewebstore.google.com/", "icon": "https://www.google.com/s2/favicons?domain=chromewebstore.google.com&sz=64" },
-            { "title": "Ping0-节点质量", "url": "https://ping0.cc/", "icon": "https://ping0.cc/favicon.ico" },
-            { "title": "Speedtest-Net", "url": "https://fiber.google.com/speedtest/", "icon": "https://fiber.google.com/favicon.ico" },
-            { "title": "Speedtest-CN", "url": "https://www.speedtest.cn/", "icon": "https://www.google.com/s2/favicons?domain=speedtest.net&sz=64" },
-            { "title": "中科大测速", "url": "https://test.ustc.edu.cn/", "icon": "https://www.google.com/s2/favicons?domain=test.ustc.edu.cn&sz=64" },
-            { "title": "GeoGebra计算器", "url": "https://www.geogebra.org/calculator", "icon": "https://www.google.com/s2/favicons?domain=geogebra.org&sz=64" },
-            { "title": "键鼠在线测试", "url": "https://www.mchose.com.cn/#/test-keyboard", "icon": "https://www.mchose.com.cn/mchose.ico" },
-            { "title": "SOC天梯图", "url": "https://socpk.com/", "icon": "https://www.google.com/s2/favicons?domain=socpk.com&sz=64" },
+            { "title": "联想应用商店", "url": "https://lestore.lenovo.com/", "icon": "https://www.google.com/s2/favicons?domain=lestore.lenovo.com&sz=64" },
             { "title": "小米驱动下载", "url": "https://www.mi.com/service/notebook/drivers", "icon": "https://www.google.com/s2/favicons?domain=mi.com&sz=64" },
-            { "title": "域名监测", "url": "https://api.uouin.com/", "icon": "https://www.google.com/s2/favicons?domain=api.uouin.com&sz=64" },
-            { "title": "CF优选域名", "url": "https://cf.090227.xyz/", "icon": "https://www.google.com/s2/favicons?domain=cf.090227.xyz&sz=64" },
-            { "title": "IPLeak", "url": "https://ipleak.net/", "icon": "https://www.google.com/s2/favicons?domain=ipleak.net&sz=64" },
-            { "title": "BrowserLeaks", "url": "https://browserleaks.com/", "icon": "https://www.google.com/s2/favicons?domain=browserleaks.com&sz=64" },
-            { "title": "联想应用商店", "url": "https://lestore.lenovo.com/", "icon": "https://www.google.com/s2/favicons?domain=lestore.lenovo.com&sz=64" }
+            { "title": "SOC天梯图", "url": "https://socpk.com/", "icon": "https://www.google.com/s2/favicons?domain=socpk.com&sz=64" },
+            { "title": "CloudConvert", "url": "https://cloudconvert.com/", "icon": "https://www.google.com/s2/favicons?domain=cloudconvert.com&sz=64" },
+            { "title": "PDF24 Tools", "url": "https://tools.pdf24.org/zh/", "icon": "https://www.google.com/s2/favicons?domain=tools.pdf24.org&sz=64" },
+            { "title": "键鼠在线测试", "url": "https://www.mchose.com.cn/#/test-keyboard", "icon": "https://www.mchose.com.cn/mchose.ico" },
+            { "title": "GeoGebra计算器", "url": "https://www.geogebra.org/calculator", "icon": "https://www.google.com/s2/favicons?domain=geogebra.org&sz=64" },
+            { "title": "Hero SMS", "url": "https://hero-sms.com/", "icon": "https://www.google.com/s2/favicons?domain=hero-sms.com&sz=64" }
+          
           ]
         }
       ]
     },
     {
       "id": "cloud",
-      "navTitle": "API&Cloud",
+      "navTitle": "API Provider",
       "icon": "ri-cloud-line",
       "sectionTitle": "域 & 云",
       "titleColor": "#06b6d4",
@@ -129,13 +139,14 @@
         { "title": "阿里云", "url": "https://www.aliyun.com/", "icon": "https://img.alicdn.com/tfs/TB1_ZXuNcfpK1RjSZFOXXa6nFXa-32-32.ico" },
         { "title": "腾讯云", "url": "https://www.tencentcloud.com/", "icon": "https://www.tencentcloud.com/favicon.ico" },
         { "title": "Oracle", "url": "https://www.oracle.com/cloud/", "icon": "https://www.oracle.com/favicon.ico" },
-        { "title": "Google Cloud", "url": "https://cloud.google.com/", "icon": "https://cloud.google.com/favicon.ico" }
+        { "title": "Google Cloud", "url": "https://cloud.google.com/", "icon": "https://cloud.google.com/favicon.ico" },
+        { "title": "ClouDNS", "url": "https://www.cloudns.net/", "icon": "https://www.google.com/s2/favicons?domain=cloudns.net&sz=64" }
        
       ]
     },
     {
       "id": "opensource",
-      "navTitle": "Dev & Res",
+      "navTitle": "Model Provider",
       "icon": "ri-open-source-line",
       "sectionTitle": "资源库",
       "titleColor": "#ec4899",
@@ -164,7 +175,7 @@
     },
     {
       "id": "life",
-      "navTitle": "Fun & Life",
+      "navTitle": "Fun and Life",
       "icon": "ri-cup-line",
       "sectionTitle": "娱乐与生活",
       "titleColor": "#f43f5e",
@@ -178,7 +189,8 @@
         { "title": "BetterGI", "url": "https://bettergi.com/", "icon": "https://www.google.com/s2/favicons?domain=bettergi.com&sz=64" },
         { "title": "BetterGI-腾讯频道", "url": "https://pd.qq.com/qqweb/qunpro/share?_wv=3&_wwv=128&appChannel=share&inviteCode=2knUxQTSdCl&businessType=9", "icon": "https://www.google.com/s2/favicons?domain=pd.qq.com&sz=64" },
         { "title": "小米云服务", "url": "https://i.mi.com/", "icon": "https://www.google.com/s2/favicons?domain=i.mi.com&sz=64" },
-        { "title": "网易邮箱", "url": "https://mail.163.com/", "icon": "https://mail.163.com/favicon.ico" }
+        { "title": "网易邮箱", "url": "https://mail.163.com/", "icon": "https://mail.163.com/favicon.ico" },
+        { "title": "PVZ  Wiki", "url": "https://wiki.biligame.com/pvzrh/%E9%A6%96%E9%A1%B5", "icon": "https://www.google.com/s2/favicons?domain=wiki.biligame.com&sz=64" }
       ]
     }
   ]
