@@ -53,7 +53,7 @@
             { "title": "YouTube", "url": "https://www.youtube.com/", "icon": "https://www.youtube.com/favicon.ico" },
             { "title": "X.Grok", "url": "https://x.com/i/grok", "icon": "https://x.com/favicon.ico" },
             { "title": "Z-Library", "url": "https://zh.z-library.sk/", "icon": "https://www.google.com/s2/favicons?domain=zh.z-library.sk&sz=64" },
-            { "title": "MIMO", "url": "https://aistudio.xiaomimimo.com/#/c", "icon": "images/mimo-gold-v2.svg" },
+            { "title": "MIMO", "url": "https://aistudio.xiaomimimo.com/#/c", "icon": "https://www.google.com/s2/favicons?domain=aistudio.xiaomimimo.com&sz=64" },
             { "title": "Qwen.ai", "url": "https://chat.qwen.ai/", "icon": "https://img.alicdn.com/imgextra/i4/O1CN01Slt9qq1Q0CmLAG9MK_!!6000000001913-55-tps-32-32.svg" },
             { "title": "豆包", "url": "https://www.doubao.com/chat/", "icon": "https://www.google.com/s2/favicons?domain=www.doubao.com&sz=64" },
             { "title": "文心一言", "url": "https://yiyan.baidu.com/", "icon": "https://www.google.com/s2/favicons?domain=yiyan.baidu.com&sz=64" }
