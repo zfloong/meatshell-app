@@ -5,10 +5,12 @@
 
 use std::time::Duration;
 
+use serde::{Deserialize, Serialize};
 use sysinfo::{Disks, Networks, System};
 
 /// Snapshot passed to the UI each tick.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SystemSnapshot {
     pub cpu_percent: f32,
     pub mem_percent: f32,
