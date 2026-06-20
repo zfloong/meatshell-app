@@ -58,7 +58,7 @@ async fn open_direct(
 
 /// Local forward (-L): listen locally and tunnel each connection to
 /// `target_host:target_port` reached from the SSH server's side.
-pub fn spawn_local(
+pub(crate) fn spawn_local(
     handle: Arc<Handle<ClientHandler>>,
     bind_addr: String,
     bind_port: u16,
@@ -100,7 +100,7 @@ pub fn spawn_local(
 /// Dynamic forward (-D): a minimal SOCKS5 proxy. Each accepted connection
 /// negotiates SOCKS5 (no auth, CONNECT only), then we open a `direct-tcpip`
 /// channel to the requested destination and splice.
-pub fn spawn_dynamic(
+pub(crate) fn spawn_dynamic(
     handle: Arc<Handle<ClientHandler>>,
     bind_addr: String,
     bind_port: u16,
