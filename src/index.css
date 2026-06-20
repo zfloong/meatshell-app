@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Catppuccin Mocha + shadcn/ui design tokens ─────────────────────────── */
+:root {
+  /* Catppuccin Mocha hex values */
+  --background: #1E1E2E;
+  --surface: #313244;
+  --surface-bright: #45475A;
+  --text: #CDD6F4;
+  --text-secondary: #BAC2DE;
+  --primary: #89B4FA;
+  --secondary: #A6E3A1;
+  --error: #F38BA8;
+  --warning: #FAB387;
+  --info: #94E2D5;
+  --border: #45475A;
+  --hover: rgba(137, 180, 250, 0.1);
+  --scrollbar-thumb: #585B70;
+  --scrollbar-thumb-hover: #6C7086;
+  --radius: 0.5rem;
+
+  /* shadcn/ui CSS variable bridge (HSL) — used by Radix primitives */
+  --color-background: 240 21% 15%;
+  --color-foreground: 228 70% 91%;
+  --color-card: 240 21% 18%;
+  --color-card-foreground: 228 70% 91%;
+  --color-popover: 240 21% 18%;
+  --color-popover-foreground: 228 70% 91%;
+  --color-primary: 218 79% 71%;
+  --color-primary-foreground: 240 21% 15%;
+  --color-secondary: 117 58% 76%;
+  --color-secondary-foreground: 240 21% 15%;
+  --color-muted: 234 13% 31%;
+  --color-muted-foreground: 228 34% 80%;
+  --color-accent: 234 13% 31%;
+  --color-accent-foreground: 228 70% 91%;
+  --color-destructive: 351 62% 74%;
+  --color-destructive-foreground: 240 21% 15%;
+  --color-border: 234 13% 31%;
+  --color-input: 234 13% 31%;
+  --color-ring: 218 79% 71%;
+}
+
+/* ── Global resets ──────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--background);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Custom scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ── Selection ──────────────────────────────────────────────────────────── */
+::selection {
+  background-color: rgba(137, 180, 250, 0.3);
+  color: var(--text);
+}
+
+/* ── Drag region marker for title bar ──────────────────────────────────── */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
