@@ -1,9 +1,12 @@
 //! Tauri IPC commands exposed to the frontend.
 
+use std::sync::Arc;
+
 use meatshell::config::{ConfigStore, Session as SessionConfig};
 use meatshell::system::{SystemSampler, SystemSnapshot};
 use tauri::State;
 
+use crate::prompts::PromptManager;
 use crate::session::SessionManager;
 
 // ── Session CRUD ──────────────────────────────────────────────────────────
@@ -36,8 +39,9 @@ pub fn connect_session(
     tab_id: String,
     session: SessionConfig,
     app: tauri::AppHandle,
+    prompts: State<'_, Arc<PromptManager>>,
 ) -> Result<(), String> {
-    mgr.connect(app, &tab_id, session)
+    mgr.connect(app, &tab_id, session, prompts.inner().clone())
 }
 
 #[tauri::command]
@@ -67,10 +71,34 @@ pub fn disconnect_session(
     mgr.disconnect(&tab_id)
 }
 
+// ── Prompt replies ────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn reply_host_key(
+    prompts: State<'_, Arc<PromptManager>>,
+    id: String,
+    accept: bool,
+) -> Result<(), String> {
+    prompts.reply_host_key(&id, accept)
+}
+
+#[tauri::command]
+pub fn reply_credential(
+    prompts: State<'_, Arc<PromptManager>>,
+    id: String,
+    user: Option<String>,
+    password: Option<String>,
+    remember: Option<bool>,
+) -> Result<(), String> {
+    let reply = match (user, password) {
+        (Some(u), Some(p)) => Some((u, p, remember.unwrap_or(false))),
+        _ => None,
+    };
+    prompts.reply_credential(&id, reply)
+}
+
 // ── Local system monitor ──────────────────────────────────────────────────
 
-/// Returns a single snapshot of the local machine's CPU/memory/network.
-/// The frontend polls this on a timer.
 #[tauri::command]
 pub fn get_system_stats(
     sampler: State<'_, std::sync::Mutex<SystemSampler>>,

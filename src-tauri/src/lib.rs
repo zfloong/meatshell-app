@@ -1,9 +1,11 @@
 mod commands;
+mod prompts;
 mod session;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use meatshell::system::SystemSampler;
+use prompts::PromptManager;
 use session::SessionManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -11,6 +13,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(SessionManager::new())
         .manage(Mutex::new(SystemSampler::new()))
+        .manage(Arc::new(PromptManager::new()))
         .invoke_handler(tauri::generate_handler![
             commands::list_sessions,
             commands::save_session,
@@ -19,6 +22,8 @@ pub fn run() {
             commands::send_input,
             commands::resize_terminal,
             commands::disconnect_session,
+            commands::reply_host_key,
+            commands::reply_credential,
             commands::get_system_stats,
         ])
         .run(tauri::generate_context!())

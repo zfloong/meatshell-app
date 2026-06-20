@@ -3,9 +3,10 @@ import { invoke } from "@tauri-apps/api/core";
 
 // ── Types matching meatshell::config::Session ─────────────────────────────
 
-export type AuthMethod = "password" | "key" | "both";
+/** Rust uses `#[serde(rename_all = "lowercase")]` so these are lowercase. */
+export type AuthMethod = "password" | "key";
 
-export type SessionKind = "Ssh" | "Serial" | "Telnet";
+export type SessionKind = "ssh" | "serial" | "telnet";
 
 export interface SessionConfig {
   id: string;
@@ -37,24 +38,42 @@ export interface SystemSnapshot {
   netTxPerSec: number;
 }
 
+// ── Prompt event payloads ─────────────────────────────────────────────────
+
+export interface HostKeyPromptPayload {
+  tab_id: string;
+  prompt_id: string;
+  host: string;
+  port: number;
+  key_type: string;
+  fingerprint: string;
+  changed: boolean;
+}
+
+export interface CredentialPromptPayload {
+  tab_id: string;
+  prompt_id: string;
+  session_id: string;
+  host: string;
+  user: string;
+  need_user: boolean;
+  need_password: boolean;
+}
+
 // ── Command wrappers ──────────────────────────────────────────────────────
 
-/** Load saved sessions from the config store. */
 export async function listSessions(): Promise<SessionConfig[]> {
   return invoke<SessionConfig[]>("list_sessions");
 }
 
-/** Save (insert or update) a session. */
 export async function saveSession(session: SessionConfig): Promise<void> {
   return invoke("save_session", { session });
 }
 
-/** Delete a session by id. */
 export async function deleteSession(id: string): Promise<void> {
   return invoke("delete_session", { id });
 }
 
-/** Start an SSH / serial / telnet session. */
 export async function connectSession(
   tabId: string,
   session: SessionConfig,
@@ -62,12 +81,10 @@ export async function connectSession(
   return invoke("connect_session", { tabId, session });
 }
 
-/** Send raw input bytes to the running session. */
 export async function sendInput(tabId: string, data: string): Promise<void> {
   return invoke("send_input", { tabId, data });
 }
 
-/** Notify the remote PTY of a resize. */
 export async function resizeTerminal(
   tabId: string,
   cols: number,
@@ -76,12 +93,31 @@ export async function resizeTerminal(
   return invoke("resize_terminal", { tabId, cols, rows });
 }
 
-/** Disconnect a session. */
 export async function disconnectSession(tabId: string): Promise<void> {
   return invoke("disconnect_session", { tabId });
 }
 
-/** Poll the local machine's CPU/memory snapshot. */
+export async function replyHostKey(
+  id: string,
+  accept: boolean,
+): Promise<void> {
+  return invoke("reply_host_key", { id, accept });
+}
+
+export async function replyCredential(
+  id: string,
+  user: string | null,
+  password: string | null,
+  remember: boolean | null,
+): Promise<void> {
+  return invoke("reply_credential", {
+    id,
+    user,
+    password,
+    remember,
+  });
+}
+
 export async function getSystemStats(): Promise<SystemSnapshot> {
   return invoke<SystemSnapshot>("get_system_stats");
 }

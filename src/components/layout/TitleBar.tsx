@@ -1,16 +1,17 @@
 import { useCallback } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X } from "lucide-react";
+import { Minus, Square, X, Plus } from "lucide-react";
 import { useWindowDrag } from "@/hooks/useWindowDrag";
 
-export default function TitleBar() {
+interface TitleBarProps {
+  onConnect: () => void;
+}
+
+export default function TitleBar({ onConnect }: TitleBarProps) {
   const startDrag = useWindowDrag();
 
   const minimize = useCallback(() => getCurrentWindow().minimize(), []);
-  const toggleMaximize = useCallback(
-    () => getCurrentWindow().toggleMaximize(),
-    [],
-  );
+  const toggleMaximize = useCallback(() => getCurrentWindow().toggleMaximize(), []);
   const close = useCallback(() => getCurrentWindow().close(), []);
 
   return (
@@ -19,14 +20,19 @@ export default function TitleBar() {
       onMouseDown={startDrag}
       className="flex h-10 items-center justify-between bg-[var(--surface-bright)] select-none flex-shrink-0"
     >
-      {/* left: app title */}
       <div className="flex items-center gap-2 px-3">
         <span className="text-sm font-medium text-[var(--text)] tracking-wide">
           Meatshell
         </span>
+        <button
+          onClick={onConnect}
+          className="no-drag flex items-center gap-1 px-2 py-0.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--hover)] rounded transition-colors"
+        >
+          <Plus size={12} />
+          Connect
+        </button>
       </div>
 
-      {/* right: window controls */}
       <div className="no-drag flex h-full">
         <button
           onClick={minimize}

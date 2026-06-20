@@ -12,6 +12,8 @@ use meatshell::serial::spawn_serial_session;
 use meatshell::ssh::{self, SessionCommand, SessionEvent, SessionHandle};
 use meatshell::telnet::spawn_telnet_session;
 
+use crate::prompts::PromptManager;
+
 /// Manages the tokio runtime and active SSH/Serial/Telnet sessions.
 pub struct SessionManager {
     pub runtime: tokio::runtime::Runtime,
@@ -34,6 +36,7 @@ impl SessionManager {
         app: AppHandle,
         tab_id: &str,
         session: SessionConfig,
+        prompts: Arc<PromptManager>,
     ) -> Result<(), String> {
         if self.sessions.lock().contains_key(tab_id) {
             return Err("session already exists".into());
@@ -78,7 +81,7 @@ impl SessionManager {
         let sessions = self.sessions.clone();
         let tid = tab_id_owned.clone();
         self.runtime.spawn(async move {
-            forward_events(app, sessions, tid, rx).await;
+            forward_events(app, sessions, tid, rx, prompts).await;
         });
 
         Ok(())
@@ -122,6 +125,7 @@ async fn forward_events(
     sessions: Arc<Mutex<HashMap<String, SessionHandle>>>,
     tab_id: String,
     mut rx: tokio::sync::mpsc::UnboundedReceiver<SessionEvent>,
+    prompts: Arc<PromptManager>,
 ) {
     while let Some(event) = rx.recv().await {
         match event {
@@ -139,6 +143,50 @@ async fn forward_events(
                 sessions.lock().remove(&tab_id);
                 break;
             }
+            SessionEvent::HostKeyPrompt {
+                host,
+                port,
+                key_type,
+                fingerprint,
+                changed,
+                responder,
+            } => {
+                let prompt_id = prompts.register_host_key(responder);
+                let _ = app.emit(
+                    "host-key-prompt",
+                    serde_json::json!({
+                        "tab_id": tab_id,
+                        "prompt_id": prompt_id,
+                        "host": host,
+                        "port": port,
+                        "key_type": key_type,
+                        "fingerprint": fingerprint,
+                        "changed": changed,
+                    }),
+                );
+            }
+            SessionEvent::CredentialPrompt {
+                session_id,
+                host,
+                user,
+                need_user,
+                need_password,
+                responder,
+            } => {
+                let prompt_id = prompts.register_credential(responder);
+                let _ = app.emit(
+                    "credential-prompt",
+                    serde_json::json!({
+                        "tab_id": tab_id,
+                        "prompt_id": prompt_id,
+                        "session_id": session_id,
+                        "host": host,
+                        "user": user,
+                        "need_user": need_user,
+                        "need_password": need_password,
+                    }),
+                );
+            }
             SessionEvent::ResourceStats {
                 cpu_percent,
                 mem_used_kib,
@@ -154,9 +202,14 @@ async fn forward_events(
                     }),
                 );
             }
+            SessionEvent::CwdChanged(path) => {
+                let _ = app.emit(&format!("terminal-cwd:{tab_id}"), path);
+            }
+            SessionEvent::SftpStatus(status) => {
+                let _ = app.emit(&format!("sftp-status:{tab_id}"), status);
+            }
             _ => {
-                // HostKeyPrompt, CredentialPrompt, SFTP events, etc.
-                // Will be wired in future iterations.
+                // Other SFTP / ZMODEM events wired in future iterations.
             }
         }
     }
