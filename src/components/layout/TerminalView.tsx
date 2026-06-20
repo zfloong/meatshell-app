@@ -12,7 +12,7 @@ import { useSessionStore } from "@/stores/sessionStore";
  * - Automatically resizes to fill its container.
  */
 export default function TerminalView({ tabId }: { tabId: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const sendInput = useSessionStore((s) => s.sendInput);
