@@ -16,19 +16,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ---- Checkout meatshell alongside the app repo ----
+      # ---- Checkout meatshell INSIDE workspace (GH Actions requires
+      #      checkout paths to be under the working tree) ----
       - name: Checkout meatshell backend
         uses: actions/checkout@v4
         with:
           repository: zfloong/meatshell
-          path: ../meatshell
+          path: meatshell
           ref: main
+
+      # ---- Patch Cargo.toml so the path dep matches CI layout ----
+      #      Local dev:  ../../meatshell  (sibling repos)
+      #      CI:         ../meatshell    (subdirectory of workspace)
+      - name: Patch meatshell path for CI
+        shell: pwsh
+        run: |
+          (Get-Content src-tauri/Cargo.toml -Raw) -replace 'path = "../../meatshell"', 'path = "../meatshell"' | Set-Content src-tauri/Cargo.toml
 
       # ---- Node.js ----
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Cache npm
         uses: actions/cache@v4
@@ -62,7 +71,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml', '../meatshell/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml', 'meatshell/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: cargo check (Tauri backend)
