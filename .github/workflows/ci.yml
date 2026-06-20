@@ -47,7 +47,7 @@ jobs:
           restore-keys: ${{ runner.os }}-npm-
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm install
 
       # ---- Generate Tauri icons ----
       - name: Generate placeholder icon
