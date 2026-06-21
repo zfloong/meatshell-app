@@ -60,6 +60,8 @@ pub fn spawn_telnet_session(
             tab_id,
             commands: cmd_tx,
             join,
+            events: evt_tx,
+            ssh_handle: Arc::new(std::sync::Mutex::new(None)),
         },
         evt_rx,
     )
