@@ -14,6 +14,7 @@
 //! There is no SFTP and no resource monitor — a Telnet console is a raw pipe.
 
 use anyhow::{Context, Result};
+use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};

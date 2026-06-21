@@ -16,6 +16,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use std::sync::Arc;
 use serialport::{DataBits, FlowControl, Parity, StopBits};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
