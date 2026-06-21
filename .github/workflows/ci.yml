@@ -67,9 +67,17 @@ jobs:
         env:
           TAURI_SKIP_DEVSERVER_CHECK: "true"
 
+      # ---- Show what was built ----
+      - name: List build outputs
+        shell: pwsh
+        run: |
+          Write-Host "=== Bundle dir contents ==="
+          Get-ChildItem -Recurse src-tauri/target/release/bundle/ 2>$null | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "=== Exe ==="
+          Get-ChildItem src-tauri/target/release/*.exe 2>$null | ForEach-Object { Write-Host $_.FullName }
+
       # ---- Upload build artifacts ----
       - name: Upload Windows installer
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: meatshell-win64
@@ -77,3 +85,4 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: warn
+          retention-days: 7
