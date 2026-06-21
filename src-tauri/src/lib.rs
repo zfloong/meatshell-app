@@ -52,6 +52,7 @@ pub fn run() {
             commands::sftp_mkdir,
             commands::sftp_delete,
             commands::sftp_rename,
+            commands::get_download_dir,
             commands::reveal_in_explorer,
             commands::open_in_editor,
             commands::port_forward_start,

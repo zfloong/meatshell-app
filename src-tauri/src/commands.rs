@@ -7,7 +7,7 @@ use meatshell::config::{ConfigStore, PortForward, Session as SessionConfig};
 use meatshell::sftp::SftpCommand;
 use meatshell::ssh::PortForwardInfo;
 use meatshell::system::{SystemSampler, SystemSnapshot};
-use tauri::State;
+use tauri::{Manager, State};
 
 use crate::prompts::PromptManager;
 use crate::session::SessionManager;
@@ -223,12 +223,50 @@ pub fn sftp_rename(
 }
 
 #[tauri::command]
-pub fn reveal_in_explorer(path: String) {
+pub fn reveal_in_explorer(mut path: String) {
     #[cfg(target_os = "windows")]
-    std::process::Command::new("explorer")
-        .arg(format!("/select,{path}"))
-        .spawn()
-        .ok();
+    {
+        // Replace forward slashes with backslashes for Windows explorer
+        path = path.replace('/', "\\");
+        let _ = std::process::Command::new("explorer")
+            .arg(format!("/select,{}", path))
+            .spawn();
+    }
+}
+
+/// Returns the default download directory:
+/// - Windows: tries `D:\meatshell-downloads` first, falls back to app-local data dir
+/// - Linux/macOS: user's download directory
+#[tauri::command]
+pub fn get_download_dir(app: tauri::AppHandle) -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        let d_drive = "D:\\meatshell-downloads";
+        let candidate = std::path::Path::new(d_drive);
+        // If D: drive exists, use it
+        if std::path::Path::new("D:\\").exists() {
+            let _ = std::fs::create_dir_all(candidate);
+            return Ok(d_drive.to_string());
+        }
+        // Fall back to the app's local data directory
+        let data_dir = app
+            .path()
+            .app_local_data_dir()
+            .unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let dl = data_dir.join("downloads");
+        let _ = std::fs::create_dir_all(&dl);
+        Ok(dl.to_string_lossy().to_string())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let data_dir = app
+            .path()
+            .app_local_data_dir()
+            .unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let dl = data_dir.join("downloads");
+        let _ = std::fs::create_dir_all(&dl);
+        Ok(dl.to_string_lossy().to_string())
+    }
 }
 
 #[tauri::command]

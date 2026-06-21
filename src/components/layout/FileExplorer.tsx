@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { downloadDir, tempDir } from "@tauri-apps/api/path";
+import { tempDir } from "@tauri-apps/api/path";
 import {
   Folder,
   FolderOpen,
@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import {
+  getDownloadDir,
   sftpSpawn,
   sftpListDir,
   sftpDownload,
@@ -260,7 +261,7 @@ export default function FileExplorer() {
 
   // ── Download helpers ────────────────────────────────────────────────────
   const addDownload = useCallback(async (entry: RemoteEntry, dirOverride?: string) => {
-    const dir = dirOverride || (await downloadDir());
+    const dir = dirOverride || (await getDownloadDir());
     const localPath = `${dir.replace(/\\/g, "/").replace(/\/$/, "")}/${entry.name}`;
     const record: DownloadRecord = {
       name: entry.name,
@@ -286,7 +287,7 @@ export default function FileExplorer() {
     async (entry: RemoteEntry) => {
       if (!activeTabId || entry.is_dir) return;
       // Open save dialog — use a prompt for directory path as fallback
-      const dir = prompt("Save to directory:", await downloadDir());
+      const dir = prompt("Save to directory:", await getDownloadDir());
       if (!dir) return;
       addDownload(entry, dir);
     },
@@ -320,7 +321,7 @@ export default function FileExplorer() {
 
   const downloadSelected = useCallback(async () => {
     if (!activeTabId) return;
-    const dir = await downloadDir();
+    const dir = await getDownloadDir();
     const files = filterEntriesRef.current.filter(e => selected.has(e.full_path) && !e.is_dir);
     for (const e of files) {
       const localPath = `${dir.replace(/\\/g, "/").replace(/\/$/, "")}/${e.name}`;

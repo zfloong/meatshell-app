@@ -202,6 +202,10 @@ export async function sftpRename(tabId: string, from: string, to: string): Promi
   return invoke("sftp_rename", { tabId, from, to });
 }
 
+export async function getDownloadDir(): Promise<string> {
+  return invoke<string>("get_download_dir");
+}
+
 export async function revealInExplorer(path: string): Promise<void> {
   return invoke("reveal_in_explorer", { path });
 }
