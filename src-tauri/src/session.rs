@@ -11,7 +11,7 @@ use tokio::sync::mpsc;
 use meatshell::config::{PortForward, Session as SessionConfig, SessionKind};
 use meatshell::serial::spawn_serial_session;
 use meatshell::sftp::{self, SftpCommand, SftpHandle};
-use meatshell::ssh::{self, ClientHandler, PortForwardInfo, SessionCommand, SessionEvent, SessionHandle};
+use meatshell::ssh::{self, PortForwardInfo, SessionCommand, SessionEvent, SessionHandle};
 use meatshell::telnet::spawn_telnet_session;
 use tokio::task::JoinHandle;
 
@@ -199,9 +199,10 @@ impl SessionManager {
             return Err("remote (-R) forwards must be configured in the session before connecting".into());
         }
 
-        // Generate unique ID and info
+        // The bind address:port pair is unique — no two listeners on the same port.
+        let id = format!("{}:{}:{}", fwd.kind, fwd.bind_addr, fwd.bind_port);
         let info = PortForwardInfo {
-            id: uuid::Uuid::new_v4().to_string(),
+            id,
             kind: fwd.kind.clone(),
             name: if fwd.name.is_empty() {
                 format!("{}→{}:{}", fwd.bind_port, fwd.host, fwd.host_port)
