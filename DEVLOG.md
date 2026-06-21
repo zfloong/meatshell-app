@@ -181,3 +181,22 @@
 ### 错误 19：按钮 hover 颜色使用旧 accent
 - **现象**：`button.tsx` 中 `hover:bg-[rgba(79,173,255,...)]` 是旧 `#4fadff`
 - **解决**：统一改为新 accent `rgba(96,165,250,...)`
+
+### 错误 20：命令面板按钮太小（4 个按钮挤在 260px 侧边栏）
+- **现象**：每条命令有 Pin(10px)/Send(12px)/Edit(10px)/Delete(10px) 四个按钮，命中区仅 ~14-18px
+- **解决**：保留 Send(14px) 始终可见；Pin 改为左侧 2px accent 竖线指示器；Edit/Delete/Duplicate 全部移到右键 `ContextMenu` 组件
+
+### 新增：右键菜单系统
+- **新文件**：`src/components/ui/context-menu.tsx` — Portal 渲染的轻量级 ContextMenu，支持 separator/danger 样式，Escape+点击外部关闭
+- **右击空白区域**：New Command / New Group / Paste
+- **右击命令项**：Send / Edit / Duplicate / Pin|Unpin / Delete
+- **右击分组标题**：New Command / Rename Group / Delete Group
+
+### 新增：CommandEntry 图标 + 描述字段
+- **Rust** `command.rs`：`CommandEntry` 加 `icon: Option<String>` + `description: Option<String>`（serde(default)，旧数据自动兼容）
+- **前端** `tauriCommands.ts`：接口同步加字段
+- **编辑弹窗**：emoji 单字符输入框 + description textarea
+- **列表显示**：emoji 图标前置 + description 第二行灰色文本
+
+### 决策：Emoji 图标
+- **结论**：Unicode emoji 零开销（系统字体渲染、无额外依赖、无 bundle 体积增长），完全可行
