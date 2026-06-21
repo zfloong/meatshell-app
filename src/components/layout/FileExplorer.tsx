@@ -11,7 +11,6 @@ import {
   FileImage,
   FileAudio,
   FileVideo,
-  FileBinary,
   FolderPlus,
   Trash2,
   Upload,
@@ -482,6 +481,6 @@ function fileIcon(name: string) {
   if (imageExts.includes(ext)) return <FileImage size={13} className="text-[var(--color-success)]" />;
   if (audioExts.includes(ext)) return <FileAudio size={13} className="text-[var(--text-secondary)]" />;
   if (videoExts.includes(ext)) return <FileVideo size={13} className="text-[var(--text-secondary)]" />;
-  if (name.startsWith(".")) return <FileBinary size={13} className="text-[var(--text-muted)]" />;
+  if (name.startsWith(".")) return <File size={13} className="text-[var(--text-muted)]" />;
   return <File size={13} className="text-[var(--text-secondary)]" />;
 }
