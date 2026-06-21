@@ -150,15 +150,20 @@
 | 优先级 | 功能 | 状态 |
 |--------|------|------|
 | 1 | SSH 密钥认证前端对话框 | 待做 |
-| 2 | SFTP 面板 UI（后端已完成） | 待做 |
-| 3 | 终端搜索/复制（xterm search addon） | 待做 |
+| 2 | SFTP 面板 UI（后端已完成） | ✅ 已做（FileExplorer 内嵌 SFTP，2026-06-21） |
+| 3 | 终端搜索/复制（xterm search addon） | ✅ 已做（2026-06-21，Ctrl+F 搜索+历史+选择复制） |
 | 4 | 远程系统监控 Sidebar 标签页 | ✅ 已做（移至 StatusBar 内联显示，2026-06-21） |
 | 5 | 等宽字体嵌入 | 待做 |
-| 6 | 端口转发 UI（后端已完成） | 待做 |
+| 6 | 端口转发 UI（后端已完成） | ✅ 已做（2026-06-21，PortForwardPanel local/dynamic） |
 | 7 | Light/Dark 主题切换入口 | 待做 |
 | 8 | 会话拖拽排序 | 待做 |
 | 9 | 侧边栏可拖拽宽度 | ✅ 已做（2026-06-21，160-400px） |
 | 10 | 远端监控数据接入前端 | ✅ 已做（2026-06-21，remote-stats 事件） |
+| 11 | 会话管理页面 | ✅ 已做（2026-06-21，编辑/删除/双击连接） |
+| 12 | 连接即保存 | ✅ 已做（2026-06-21，Connect & Save） |
+| 13 | 优雅断连（SSH_MSG_DISCONNECT） | ✅ 已做（2026-06-21） |
+| 14 | 文件下载定位功能 | ✅ 已做（2026-06-21，explorer /select,） |
+| 15 | 全页面汉化 | 待做 |
 
 ---
 
@@ -200,3 +205,118 @@
 
 ### 决策：Emoji 图标
 - **结论**：Unicode emoji 零开销（系统字体渲染、无额外依赖、无 bundle 体积增长），完全可行
+
+---
+
+## 2026-06-21 — 终端搜索 + 会话管理 + 端口转发 + 文件下载修复
+
+### 新增功能
+
+#### 端口转发面板 (PortForwardPanel)
+- **文件**：`src/components/layout/PortForwardPanel.tsx`
+- 支持 Local / Dynamic 两种转发类型
+- 新建/删除/状态列表
+- 后端命令：`start_forward` / `stop_forward` / `list_forwards`
+
+#### 会话管理页面 (SessionManager)
+- **文件**：`src/components/SessionManager.tsx`
+- 分组管理、编辑/删除会话、双击连接、上次连接时间显示
+- 数据持久化到 `sessions.json`
+
+#### 终端搜索 (Ctrl+F)
+- **依赖**：`xterm-addon-search`（⚠ 注意是 unscoped 命名，不是 `@xterm/addon-search`）
+- **组件**：`TerminalView.tsx` 内浮动搜索条
+- **功能**：输入框 + 历史下拉（localStorage 持久化，去重，20 条上限）+ ◀▶ 箭头翻页 + 绿/红点状态指示 + ✕ 关闭
+- **实现**：`SearchAddon.findNext()` / `findPrevious()` / `clearDecorations()` + 50ms 去抖
+
+#### 选择即复制
+- **组件**：`TerminalView.tsx` mousedown/mouseup/mouseleave 事件监听
+- **机制**：鼠标松开时读取 `xterm.getSelection()`，调用 `navigator.clipboard.writeText()`
+- **反馈**：复制成功时选区背景闪绿 200ms（`cursor: #22c55e` 临时覆盖）
+
+#### 连接即保存 (Connect & Save)
+- **组件**：`ConnectDialog.tsx`，按钮 "Connect" → "Connect & Save"
+- `handleConnect` 中自动调用 `saveSession(form)` 持久化
+
+#### 优雅断连
+- **文件**：`src-tauri/src/lib.rs` `on_window_event`
+- 点击 ✕ 关闭 → `api.prevent_close()` → 遍历所有 session 发送 `SSH_MSG_DISCONNECT` + 清理 SFTP/PortForward → 250ms 等待 → `window.close()`
+- **关键**：需要 `use tauri::Manager;` 才能使用 `window.state::<T>()`
+
+#### 文件下载定位修复 + 下载目录迁移
+- **Bug 根因**：前端 `FileExplorer.tsx` 用 `dir.replace(/\\/g, "/")` 把所有路径转为正斜杠，传给 `explorer /select,{path}` 后 Windows 解析错误，跳转目录少一级
+- **修复**：`commands.rs` 的 `reveal_in_explorer` 在调用 `explorer` 前将路径转为反斜杠
+- **下载目录**：从系统 Downloads（可能中文"下载"路径）改为 `D:\meatshell-downloads`，D 盘不存在时回退到 `%LOCALAPPDATA%\meatshell\downloads`
+- **新增命令**：`get_download_dir`（Rust 端自动创建目录）
+
+---
+
+### 错误 21: xterm-addon-search 包名不一致
+- **现象**：`package.json` 写 `@xterm/addon-search`（scoped 命名），`TerminalView.tsx` import `xterm-addon-search`（unscoped 命名）
+- **原因**：xterm 5.x 的 search addon 有两个 npm 包——`@xterm/addon-search`（新 scoped）和 `xterm-addon-search`（旧 unscoped），互不兼容
+- **解决**：统一为 `xterm-addon-search`（与项目其他 xterm 包风格一致）
+- **教训**：安装 xterm addon 前确认项目的命名风格，scoped 和 unscoped 是两个不同包
+
+### 错误 22: SessionHandle 构造字段缺失（serial.rs / telnet.rs）
+- **现象**：`meatshell/src/ssh.rs` 的 `SessionHandle` 新增 `events` 和 `ssh_handle` 字段后，`serial.rs` 和 `telnet.rs` 的构造代码编译失败
+- **原因**：改了结构体字段但没 grep 所有构造点
+- **解决**：补全 `serial.rs` 和 `telnet.rs` 的 `SessionHandle` 构造
+- **教训**：改 struct 字段时务必 `grep` 所有构造位置
+
+### 错误 23: telnet.rs 缺 Arc 导入
+- **现象**：`telnet.rs` 用了 `Arc` 但未导入
+- **解决**：加 `use std::sync::Arc;`
+
+### 错误 24: serial.rs 重复导入 Arc
+- **现象**：`serial.rs` 已有 `use std::sync::{Arc, Mutex}`，又加了 `use std::sync::Arc;`
+- **解决**：删除重复的单独导入
+
+### 错误 25: session.rs 使用 uuid 但无依赖
+- **现象**：`uuid::Uuid::new_v4()` 编译失败，uuid crate 未在 Cargo.toml 中声明
+- **解决**：改用确定性 ID（如 `local:127.0.0.1:8080`），无需引入额外依赖
+
+### 错误 26: session.rs 未使用 ClientHandler 导入
+- **现象**：compile warning — unused import
+- **解决**：删除该 import
+
+### 错误 27: lib.rs 缺 use tauri::Manager
+- **现象**：`window.state::<SessionManager>()` 编译失败 — method `state` not found
+- **原因**：`state()` 方法来自 `tauri::Manager` trait，必须显式导入
+- **解决**：添加 `use tauri::Manager;`
+
+### 错误 28: icon.ico 缺失
+- **现象**：`cargo check` 报 `icons/icon.ico` 缺失
+- **原因**：原有 `icon.png` 是 70 字节空文件，`tauri.conf.json` 引用了不存在的 icon 文件
+- **解决**：PowerShell 脚本生成 32x32 BMP-based ICO（蓝色 #3B82F6，4286 字节）；`tauri.conf.json` 精简 icon 引用为只含 `icon.ico`
+
+### 错误 29: RC 编译器编码错误（仅沙箱）
+- **现象**：CI/沙箱中 `embed_resource` 捕获 RC 编译器输出失败
+- **原因**：中文 Windows RC 编译器输出中文 stdout，编码不兼容
+- **影响**：仅影响沙箱环境，用户本地 `cargo check` 正常通过
+
+### 错误 30: Node.js 环境缺失（用户本地）
+- **现象**：`npm`/`pnpm` 均报 "无法将...项识别为 cmdlet"
+- **解决**：指导安装 Node.js（[nodejs.org](https://nodejs.org)），勾选 "Add to PATH"，安装后新开 PowerShell
+- **验证**：`node -v` + `npm -v`
+
+### 错误 31: reveal_in_explorer 正斜杠路径
+- **现象**：文件下载后点击"Show in folder"，Explorer 跳转目录少一级
+- **根因**：前端 `FileExplorer.tsx` 用 `dir.replace(/\\/g, "/")` 将反斜杠全部转为正斜杠，构建的 `localPath` 如 `C:/Users/65451/Downloads/file.txt`，传给 `explorer /select,{path}` 后 Windows 正斜杠路径解析不完整
+- **解决**：`commands.rs` 的 `reveal_in_explorer` 在 Windows 上先 `path.replace('/', "\\")` 再调用 explorer
+
+### 错误 32: commands.rs 缺 use tauri::Manager
+- **现象**：`get_download_dir` 中 `app.path()` 编译失败
+- **原因**：`path()` 方法来自 `Manager` trait，需导入 `use tauri::{Manager, State};`
+
+### 错误 33: PowerShell 不支持 heredoc（<<'EOF'）
+- **现象**：`git commit -m "$(cat <<'EOF'..."` 在 PowerShell 中无输出
+- **原因**：PowerShell 不支持 bash heredoc 语法
+- **解决**：换用简短中文单行 commit message
+
+---
+
+### 平台/环境注意事项（更新）
+
+- **用户本地环境**：Windows 10/11，已安装 Node.js
+- **cargo check 命令**：必须在项目根目录执行 `cargo check --manifest-path src-tauri\Cargo.toml`（Cargo.toml 在 src-tauri 子目录）
+- **PowerShell git 提交**：不用 heredoc，用简短单行 commit message
