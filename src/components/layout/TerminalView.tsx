@@ -6,27 +6,27 @@ import "xterm/css/xterm.css";
 import { useSessionStore } from "@/stores/sessionStore";
 
 const terminalTheme = {
-  background: "#0c1117",
-  foreground: "#e6eef5",
-  cursor: "#60a5fa",
-  cursorAccent: "#0c1117",
-  selectionBackground: "rgba(96, 165, 250, 0.25)",
+  background: "#080c12",
+  foreground: "#e9eef5",
+  cursor: "#5b9cf5",
+  cursorAccent: "#080c12",
+  selectionBackground: "rgba(91, 156, 245, 0.28)",
   selectionForeground: "#ffffff",
-  black: "#0c1117",
-  red: "#d9534f",
-  green: "#5cb85c",
-  yellow: "#f0ad4e",
-  blue: "#60a5fa",
-  magenta: "#c678dd",
-  cyan: "#56b6c2",
-  white: "#e6eef5",
-  brightBlack: "#555555",
-  brightRed: "#ff6b6b",
-  brightGreen: "#7ec699",
-  brightYellow: "#f0ad4e",
-  brightBlue: "#7dcaff",
-  brightMagenta: "#d19a66",
-  brightCyan: "#7ec699",
+  black: "#080c12",
+  red: "#f87171",
+  green: "#4ade80",
+  yellow: "#fbbf24",
+  blue: "#5b9cf5",
+  magenta: "#c084fc",
+  cyan: "#22d3ee",
+  white: "#e9eef5",
+  brightBlack: "#4a5568",
+  brightRed: "#fca5a5",
+  brightGreen: "#86efac",
+  brightYellow: "#fde68a",
+  brightBlue: "#93c5fd",
+  brightMagenta: "#d8b4fe",
+  brightCyan: "#67e8f9",
   brightWhite: "#ffffff",
 };
 
@@ -395,7 +395,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
           style={{ minWidth: 280 }}
         >
           <div
-            className="flex items-center gap-1.5 bg-[#141b24] border border-[var(--border-subtle)] rounded-md px-2.5 py-1.5 shadow-lg"
+            className="flex items-center gap-1.5 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-md px-2.5 py-1.5 shadow-lg"
           >
             {/* Search icon */}
             <svg
@@ -469,7 +469,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
 
           {/* ── History dropdown ─────────────────────────────────────── */}
           {historyVisible && searchHistory.length > 0 && (
-            <div className="mt-1 bg-[#141b24] border border-[var(--border-subtle)] rounded-md shadow-lg overflow-hidden">
+            <div className="mt-1 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-md shadow-lg overflow-hidden">
               <div className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 Recent
               </div>

@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<
@@ -9,11 +9,11 @@ const Input = React.forwardRef<
     <input
       type={type}
       className={cn(
-        "flex h-9 w-full rounded-sm border-2 border-transparent bg-[#151c22] px-3 py-1 text-sm text-[var(--text-primary)]",
+        "flex h-9 w-full rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 py-1.5 text-sm text-[var(--text-primary)]",
         "placeholder:text-[var(--text-muted)]",
-        "focus:border-[var(--border-focus)] focus:bg-[#181e23] focus:outline-none",
-        "disabled:bg-[var(--bg-surface)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed",
-        "transition-[border-color,background] duration-150",
+        "focus:border-[var(--accent)]/60 focus:bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/15",
+        "disabled:bg-[var(--bg-base)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed",
+        "transition-all duration-150",
         className,
       )}
       ref={ref}

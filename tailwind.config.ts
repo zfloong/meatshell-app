@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+﻿import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
 export default {
@@ -54,6 +54,7 @@ export default {
         md: "var(--radius-md)",
         sm: "var(--radius-sm)",
         xs: "var(--radius-xs)",
+        full: "var(--radius-full)",
       },
       fontFamily: {
         sans: [
@@ -73,31 +74,41 @@ export default {
       },
       keyframes: {
         "dialog-in": {
-          from: { opacity: "0", transform: "scale(0.96) translateY(8px)" },
+          from: { opacity: "0", transform: "scale(0.95) translateY(12px)" },
           to: { opacity: "1", transform: "scale(1) translateY(0)" },
         },
         "drop-in": {
-          from: { opacity: "0", transform: "translateY(-4px) scale(0.98)" },
+          from: { opacity: "0", transform: "translateY(-6px) scale(0.97)" },
           to: { opacity: "1", transform: "translateY(0) scale(1)" },
         },
         "slide-in-right": {
-          from: { opacity: "0", transform: "translateX(8px)" },
+          from: { opacity: "0", transform: "translateX(12px)" },
           to: { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.92)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
         pulse: {
           "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.4" },
+          "50%": { opacity: "0.35" },
         },
       },
       animation: {
-        "dialog-in": "dialog-in var(--duration-slow) var(--ease-spring)",
-        "drop-in": "drop-in var(--duration-slow) var(--ease-out)",
+        "dialog-in": "dialog-in var(--duration-slower) var(--ease-spring)",
+        "drop-in": "drop-in var(--duration-slow) var(--ease-spring)",
         "slide-in-right": "slide-in-right var(--duration-base) var(--ease-out)",
+        "slide-up": "slide-up var(--duration-base) var(--ease-out)",
         "fade-in": "fade-in var(--duration-base) var(--ease-default)",
+        "scale-in": "scale-in var(--duration-slow) var(--ease-spring)",
         pulse: "pulse 1.5s infinite",
       },
     },

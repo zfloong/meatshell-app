@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import { useUIStore, MIN_SIDEBAR_WIDTH } from "@/stores/uiStore";
 import CommandPanel from "@/components/CommandPanel";
@@ -6,10 +6,6 @@ import SessionManager from "@/components/SessionManager";
 
 type SidebarTab = "sessions" | "commands";
 
-/**
- * Sidebar with proportional resize and collapse/expand support.
- * One-line Tauri drag region header + tabbed panels (Sessions / Commands).
- */
 export default function Sidebar() {
   const isOpen = useUIStore((s) => s.isSidebarOpen);
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
@@ -56,61 +52,62 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Expand toggle — visible when sidebar is collapsed */}
+      {/* Expand toggle — visible when sidebar collapsed */}
       {!isOpen && (
         <button
           onClick={toggleSidebar}
           title="Expand sidebar"
-          className="absolute left-2 top-11 z-50 w-7 h-7 flex items-center justify-center
-                     rounded-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]
-                     hover:bg-[var(--surface-hover)] transition-colors"
+          className="absolute left-3 top-12 z-50 w-8 h-8 flex items-center justify-center
+                     rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+                     hover:bg-[var(--surface-hover)] backdrop-blur-sm transition-all duration-150
+                     hover:scale-105 active:scale-95"
         >
           <PanelLeftOpen size={16} />
         </button>
       )}
 
-      {/* Sidebar body — width from store */}
+      {/* Sidebar body — glass */}
       <aside
         className="sidebar-glass flex flex-col flex-shrink-0 overflow-hidden relative"
         style={{ width: sidebarWidth }}
       >
         {/* Header row */}
         <div
-          className="flex items-center justify-between gap-2 px-3 h-8 flex-shrink-0 select-none"
+          className="flex items-center justify-between gap-2 px-4 h-10 flex-shrink-0 select-none border-b border-[var(--border-subtle)]"
           data-tauri-drag-region
         >
-          <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wide no-drag">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wide no-drag uppercase">
             {tab === "sessions" ? "Sessions" : "Commands"}
           </span>
           <button
             onClick={toggleSidebar}
             title="Collapse sidebar"
-            className="no-drag w-6 h-6 flex items-center justify-center rounded-sm
+            className="no-drag w-7 h-7 flex items-center justify-center rounded-md
                        text-[var(--text-secondary)] hover:text-[var(--text-primary)]
-                       hover:bg-[var(--surface-hover)] transition-colors"
+                       hover:bg-[var(--surface-hover)] transition-all duration-150"
           >
             <PanelLeftClose size={14} />
           </button>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex items-center border-b border-[var(--border-subtle)] flex-shrink-0">
+        {/* Tab bar — pill style */}
+        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-[var(--border-subtle)] flex-shrink-0">
           <button
             onClick={() => setTab("sessions")}
-            className={`flex-1 py-1 text-[10px] font-medium transition-colors border-b-2 -mb-[1px] ${
+            className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all duration-150 ${
               tab === "sessions"
-                ? "text-[var(--accent)] border-[var(--accent)]"
-                : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+                ? "bg-[var(--surface-selected)] text-[var(--accent)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
             }`}
           >
             Sessions
           </button>
           <button
             onClick={() => setTab("commands")}
-            className={`flex-1 py-1 text-[10px] font-medium transition-colors border-b-2 -mb-[1px] ${
+            className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-all duration-150 ${
               tab === "commands"
-                ? "text-[var(--accent)] border-[var(--accent)]"
-                : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+                ? "bg-[var(--surface-selected)] text-[var(--accent)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
             }`}
           >
             Commands
@@ -126,11 +123,11 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Resize handle — right edge, 4px wide */}
+        {/* Resize handle — right edge */}
         <div
           onMouseDown={onDragStart}
           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
-                     hover:bg-[var(--accent)] transition-colors z-10"
+                     hover:bg-[var(--accent)]/40 transition-colors z-10"
         />
       </aside>
     </>

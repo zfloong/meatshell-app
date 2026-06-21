@@ -1,19 +1,19 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-base)] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] hover:scale-[1.02]",
   {
     variants: {
       variant: {
         primary:
-          "bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--accent-border)] hover:bg-[rgba(96,165,250,0.25)] hover:border-[rgba(96,165,250,0.5)]",
+          "bg-[var(--accent)]/90 text-white hover:bg-[var(--accent)] shadow-sm shadow-[var(--accent)]/20 hover:shadow-md hover:shadow-[var(--accent)]/25",
         destructive:
-          "bg-transparent text-[var(--color-danger)] border border-[rgba(217,83,79,0.3)] hover:bg-[rgba(217,83,79,0.12)]",
+          "bg-[var(--color-danger)]/15 text-[var(--color-danger)] border border-[var(--color-danger)]/20 hover:bg-[var(--color-danger)]/25 hover:border-[var(--color-danger)]/35",
         outline:
-          "border border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]",
+          "border border-[var(--border-strong)] bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]",
         ghost:
           "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]",
         link: "text-[var(--accent)] underline-offset-4 hover:underline",
@@ -21,7 +21,7 @@ const buttonVariants = cva(
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-8",
+        lg: "h-11 px-6 text-base",
         icon: "h-9 w-9",
       },
     },
