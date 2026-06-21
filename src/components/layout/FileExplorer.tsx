@@ -150,6 +150,8 @@ export default function FileExplorer() {
   const [sortCol, setSortCol] = useState<SortColumn>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
+  const filterEntriesRef = useRef<RemoteEntry[]>([]);
+
   const [transfer, setTransfer] = useState<TransferState>(EMPTY_TRANSFER);
   const transferTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -319,7 +321,7 @@ export default function FileExplorer() {
   const downloadSelected = useCallback(async () => {
     if (!activeTabId) return;
     const dir = await downloadDir();
-    const files = filterEntries.filter(e => selected.has(e.full_path) && !e.is_dir);
+    const files = filterEntriesRef.current.filter(e => selected.has(e.full_path) && !e.is_dir);
     for (const e of files) {
       const localPath = `${dir.replace(/\\/g, "/").replace(/\/$/, "")}/${e.name}`;
       const record: DownloadRecord = {
@@ -333,7 +335,7 @@ export default function FileExplorer() {
       setDownloadHistory(prev => [record, ...prev].slice(0, 50));
       sftpDownload(activeTabId!, e.full_path, dir);
     }
-  }, [activeTabId, filterEntries, selected]);
+  }, [activeTabId, selected]);
 
   // ── Sorting ────────────────────────────────────────────────────────────
   const toggleSort = useCallback(
@@ -350,7 +352,9 @@ export default function FileExplorer() {
   };
 
   const filterEntries = useMemo(() => {
-    return entries.filter(e => showHidden || e.name === ".." || !e.name.startsWith("."));
+    const filtered = entries.filter(e => showHidden || e.name === ".." || !e.name.startsWith("."));
+    filterEntriesRef.current = filtered;
+    return filtered;
   }, [entries, showHidden]);
 
   const sortedEntries = useMemo(() => {
@@ -495,7 +499,7 @@ export default function FileExplorer() {
 
   const multiCtx = useCallback(
     (): (ContextMenuItem | null)[] => {
-      const selFiles = filterEntries.filter(e => selected.has(e.full_path) && !e.is_dir);
+      const selFiles = filterEntriesRef.current.filter(e => selected.has(e.full_path) && !e.is_dir);
       const n = selFiles.length;
       return [
         {
@@ -518,7 +522,7 @@ export default function FileExplorer() {
         },
       ];
     },
-    [activeTabId, filterEntries, selected, downloadSelected, refreshCwd],
+    [activeTabId, selected, downloadSelected, refreshCwd],
   );
 
   // ── Rendering ──────────────────────────────────────────────────────────
