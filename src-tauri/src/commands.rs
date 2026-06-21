@@ -63,6 +63,8 @@ pub fn save_command(entry: CommandEntry) -> Result<CommandEntry, String> {
             category: String::new(),
             pinned: false,
             last_used: None,
+            icon: None,
+            description: None,
         }))
 }
 
