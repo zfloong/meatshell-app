@@ -32,6 +32,12 @@ export interface ActiveTab {
   remoteStats: RemoteStats | null;
 }
 
+interface SftpStats {
+  folders: number;
+  files: number;
+  selected: number;
+}
+
 interface SessionState {
   /** Saved sessions (loaded from config store). */
   sessions: SessionConfig[];
@@ -45,6 +51,10 @@ interface SessionState {
   hostKeyPrompt: HostKeyPromptPayload | null;
   /** Pending credential prompt. */
   credentialPrompt: CredentialPromptPayload | null;
+  /** Last connection error message (auto-clears). */
+  lastError: string | null;
+  /** File explorer stats for status bar. */
+  sftpStats: SftpStats | null;
 
   // Actions
   loadSessions: () => Promise<void>;
@@ -56,6 +66,8 @@ interface SessionState {
   sendInput: (tabId: string, data: string) => Promise<void>;
   resize: (tabId: string, cols: number, rows: number) => Promise<void>;
   setActiveTab: (tabId: string) => void;
+  setSftpStats: (stats: SftpStats | null) => void;
+  clearError: () => void;
 
   // Dialog controls
   openConnectDialog: () => void;
@@ -77,6 +89,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   connectDialogOpen: false,
   hostKeyPrompt: null,
   credentialPrompt: null,
+  lastError: null,
+  sftpStats: null,
   _unlisteners: new Map(),
 
   // ── Session CRUD ───────────────────────────────────────────────────────
@@ -127,7 +141,19 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       };
     });
     await get()._setupListener(tabId);
-    await connectSession(tabId, session);
+    try {
+      await connectSession(tabId, session);
+    } catch (err) {
+      const msg = String(err);
+      set({ lastError: msg });
+      // Remove the tab that failed to start
+      set((s) => ({
+        tabs: s.tabs.filter((t) => t.id !== tabId),
+        activeTabId: s.activeTabId === tabId ? null : s.activeTabId,
+      }));
+      await get()._teardownListener(tabId);
+      setTimeout(() => set({ lastError: null }), 6000);
+    }
   },
 
   async disconnect(tabId) {
@@ -149,6 +175,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   setActiveTab(tabId) {
     set({ activeTabId: tabId });
+  },
+
+  setSftpStats(stats) {
+    set({ sftpStats: stats });
+  },
+
+  clearError() {
+    set({ lastError: null });
   },
 
   // ── Dialog controls ────────────────────────────────────────────────────
@@ -186,6 +220,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const unlistenClosed = await listen<string>(
       `terminal-closed:${tabId}`,
       (event) => {
+        const tab = get().tabs.find((t) => t.id === tabId);
+        // If tab was still connecting, show error
+        if (tab && tab.status === "connecting") {
+          set({ lastError: `Connection failed: ${event.payload}` });
+          setTimeout(() => set({ lastError: null }), 6000);
+        }
         set((s) => ({
           tabs: s.tabs.filter((t) => t.id !== tabId),
           activeTabId: s.activeTabId === tabId ? null : s.activeTabId,

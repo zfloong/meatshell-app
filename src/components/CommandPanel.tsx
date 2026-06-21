@@ -6,6 +6,7 @@ import {
   Send,
   Plus,
   FolderOpen,
+  FolderClosed,
   Edit3,
   Copy,
   Pin,
@@ -13,6 +14,9 @@ import {
   Trash2,
   FolderPlus,
   ClipboardPaste,
+  ArrowDownAZ,
+  Clock,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useCommandStore } from "@/stores/commandStore";
 import { useSessionStore } from "@/stores/sessionStore";
@@ -26,9 +30,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ContextMenu, { type ContextMenuItem } from "@/components/ui/context-menu";
-import { useDragSort } from "@/hooks/useDragSort";
 
-// ── Context menu position state ────────────────────────────────────────────
+type SortMode = "name" | "recent";
 
 interface CtxState {
   items: (ContextMenuItem | null)[];
@@ -36,12 +39,30 @@ interface CtxState {
   y: number;
 }
 
+// ── Tree types ──────────────────────────────────────────────────────────────
+
+interface TreeNode {
+  name: string;
+  path: string;
+  depth: number;
+  commands: CommandEntry[];
+  children: TreeNode[];
+  isEmpty: boolean;
+}
+
 export default function CommandPanel() {
   const entries = useCommandStore((s) => s.entries);
+  const emptyFolders = useCommandStore((s) => s.emptyFolders);
   const load = useCommandStore((s) => s.load);
   const upsert = useCommandStore((s) => s.upsert);
   const remove = useCommandStore((s) => s.remove);
-  const reorder = useCommandStore((s) => s.reorder);
+  const addEmptyFolder = useCommandStore((s) => s.addEmptyFolder);
+  const removeEmptyFolder = useCommandStore((s) => s.removeEmptyFolder);
+  const renameFolder = useCommandStore((s) => s.renameFolder);
+
+  const [sortMode, setSortMode] = useState<SortMode>(() =>
+    localStorage.getItem("cmd-sort") === "recent" ? "recent" : "name",
+  );
 
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const sendInput = useSessionStore((s) => s.sendInput);
@@ -51,83 +72,171 @@ export default function CommandPanel() {
   const [editingNew, setEditingNew] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [ctx, setCtx] = useState<CtxState | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ ids: string[] } | null>(null);
+  const [newFolderPrompt, setNewFolderPrompt] = useState<{ parentPath: string } | null>(null);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // ── Group & filter ──────────────────────────────────────────────────────
+  // ── All known folder paths ─────────────────────────────────────────────
 
-  const grouped = useMemo(() => {
-    const lower = search.toLowerCase();
-    const filtered = lower
-      ? entries.filter(
-          (e) =>
-            e.label.toLowerCase().includes(lower) ||
-            e.command.toLowerCase().includes(lower) ||
-            (e.description ?? "").toLowerCase().includes(lower),
-        )
-      : [...entries];
-
-    const groups = new Map<string, CommandEntry[]>();
-    for (const e of filtered) {
-      const cat = e.category.trim() || "Uncategorized";
-      if (!groups.has(cat)) groups.set(cat, []);
-      groups.get(cat)!.push(e);
-    }
-
-    // Sort each category: use manual order if any entry has it, else auto-sort
-    for (const [, cmds] of groups) {
-      const hasManualOrder = cmds.some((c) => c.order != null);
-      if (hasManualOrder) {
-        cmds.sort((a, b) => {
-          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-          return (a.order ?? 0) - (b.order ?? 0);
-        });
-      } else {
-        cmds.sort((a, b) => {
-          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-          const la = a.last_used ?? "";
-          const lb = b.last_used ?? "";
-          return lb.localeCompare(la);
-        });
+  const allFolderPaths = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of entries) {
+      const cat = e.category.trim();
+      if (cat) {
+        const parts = cat.split("/");
+        for (let i = 0; i < parts.length; i++) {
+          set.add(parts.slice(0, i + 1).join("/"));
+        }
       }
     }
-
-    return [...groups.entries()].sort(([a], [b]) => {
-      if (a === "Uncategorized") return 1;
-      if (b === "Uncategorized") return -1;
-      return a.localeCompare(b);
-    });
-  }, [entries, search]);
-
-  // ── Drag sort ───────────────────────────────────────────────────────────
-
-  const handleReorder = useCallback(
-    (fromIndex: number, toIndex: number) => {
-      // Get all entry IDs in current render order (grouped → flat)
-      const allIds: string[] = [];
-      for (const [, cmds] of grouped) {
-        for (const c of cmds) allIds.push(c.id);
+    for (const p of emptyFolders) {
+      set.add(p);
+      const parts = p.split("/");
+      for (let i = 0; i < parts.length; i++) {
+        set.add(parts.slice(0, i + 1).join("/"));
       }
-      if (fromIndex < 0 || fromIndex >= allIds.length) return;
-      if (toIndex < 0 || toIndex >= allIds.length) return;
-      const [moved] = allIds.splice(fromIndex, 1);
-      allIds.splice(toIndex, 0, moved);
-      reorder(allIds);
+    }
+    return [...set].sort();
+  }, [entries, emptyFolders]);
+
+  // ── Sort commands within a group ──────────────────────────────────────
+
+  const sortCommands = useCallback(
+    (cmds: CommandEntry[]) => {
+      const copy = [...cmds];
+      copy.sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        if (sortMode === "recent") {
+          const ta = a.last_used ? new Date(a.last_used).getTime() : 0;
+          const tb = b.last_used ? new Date(b.last_used).getTime() : 0;
+          return tb - ta;
+        }
+        return (a.label || a.command).localeCompare(b.label || b.command);
+      });
+      return copy;
     },
-    [grouped, reorder],
+    [sortMode],
   );
 
-  const { dragging, dragOver, bindDragItem } = useDragSort(handleReorder);
+  // ── Build tree ────────────────────────────────────────────────────────
 
-  // ── Actions ─────────────────────────────────────────────────────────────
+  const tree = useMemo(() => {
+    const lower = search.toLowerCase();
 
-  const toggleCollapse = useCallback((cat: string) => {
+    // Group commands by category path
+    const cmdByPath = new Map<string, CommandEntry[]>();
+    for (const e of entries) {
+      if (lower) {
+        const match =
+          e.label.toLowerCase().includes(lower) ||
+          e.command.toLowerCase().includes(lower) ||
+          (e.description ?? "").toLowerCase().includes(lower);
+        if (!match) continue;
+      }
+      const cat = e.category.trim() || "Uncategorized";
+      if (!cmdByPath.has(cat)) cmdByPath.set(cat, []);
+      cmdByPath.get(cat)!.push(e);
+    }
+
+    // Collect folder paths from commands + empty folders
+    const folderPaths = new Set<string>();
+    for (const cat of cmdByPath.keys()) {
+      if (cat === "Uncategorized") continue;
+      const parts = cat.split("/");
+      for (let i = 0; i < parts.length; i++) {
+        folderPaths.add(parts.slice(0, i + 1).join("/"));
+      }
+    }
+    for (const p of emptyFolders) {
+      if (!lower) folderPaths.add(p);
+    }
+
+    // Top-level entries: Uncategorized + root folders
+    const rootNodes: TreeNode[] = [];
+
+    // Uncategorized
+    const uncategorized = cmdByPath.get("Uncategorized");
+    if (uncategorized && uncategorized.length > 0) {
+      rootNodes.push({
+        name: "Uncategorized",
+        path: "Uncategorized",
+        depth: 0,
+        commands: sortCommands(uncategorized),
+        children: [],
+        isEmpty: false,
+      });
+    }
+
+    // Build tree from folder paths (depth 0–2)
+    const buildChildren = (parent: string, depth: number): TreeNode[] => {
+      const prefix = parent ? parent + "/" : "";
+      const children: TreeNode[] = [];
+      const seen = new Set<string>();
+
+      for (const fullPath of folderPaths) {
+        if (!fullPath.startsWith(prefix)) continue;
+        const rest = fullPath.slice(prefix.length);
+        const slashIdx = rest.indexOf("/");
+        const childName = slashIdx >= 0 ? rest.slice(0, slashIdx) : rest;
+        if (seen.has(childName)) continue;
+        seen.add(childName);
+
+        const childPath = prefix + childName;
+        const cmds = cmdByPath.get(childPath) || [];
+        const isExplicitEmpty = emptyFolders.includes(childPath);
+        const isEmpty = cmds.length === 0 && isExplicitEmpty;
+
+        if (cmds.length === 0 && !isExplicitEmpty && !lower) continue;
+        // In search mode, show folders that have matching commands (even if indirect)
+        if (lower && cmds.length === 0 && !isExplicitEmpty) {
+          // Check if any descendant has matching commands
+          let hasMatchingDescendant = false;
+          for (const [cat, ccmds] of cmdByPath) {
+            if (cat.startsWith(childPath + "/") && ccmds.length > 0) {
+              hasMatchingDescendant = true;
+              break;
+            }
+          }
+          if (!hasMatchingDescendant) continue;
+        }
+
+        const subChildren = depth < 2 ? buildChildren(childPath, depth + 1) : [];
+        children.push({
+          name: childName,
+          path: childPath,
+          depth,
+          commands: isEmpty ? [] : sortCommands(cmds),
+          children: subChildren,
+          isEmpty,
+        });
+      }
+
+      children.sort((a, b) => {
+        if (a.isEmpty !== b.isEmpty) return a.isEmpty ? 1 : -1;
+        return a.name.localeCompare(b.name);
+      });
+      return children;
+    };
+
+    // In search mode, only show Uncategorized if it has matches
+    if (!lower || uncategorized?.length) {
+      const roots = buildChildren("", 0);
+      rootNodes.push(...roots);
+    }
+
+    return rootNodes;
+  }, [entries, emptyFolders, search, sortCommands]);
+
+  // ── Actions ───────────────────────────────────────────────────────────
+
+  const toggleCollapse = useCallback((path: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   }, []);
@@ -168,7 +277,37 @@ export default function CommandPanel() {
     [upsert],
   );
 
-  // ── Context menu builders ──────────────────────────────────────────────
+  const openNewCommandDialog = useCallback(
+    (category: string, command: string = "") => {
+      setEditing({
+        id: "",
+        label: "",
+        command,
+        category,
+        pinned: false,
+        last_used: null,
+        icon: null,
+        description: null,
+      });
+      setEditingNew(true);
+    },
+    [],
+  );
+
+  const handleMoveTo = useCallback(
+    async (ids: string[], targetCategory: string) => {
+      for (const id of ids) {
+        const entry = entries.find((e) => e.id === id);
+        if (entry) {
+          await upsert({ ...entry, category: targetCategory });
+        }
+      }
+      setMoveTarget(null);
+    },
+    [entries, upsert],
+  );
+
+  // ── Context menu builders ─────────────────────────────────────────────
 
   const showCtx = useCallback(
     (e: React.MouseEvent, items: (ContextMenuItem | null)[]) => {
@@ -180,102 +319,275 @@ export default function CommandPanel() {
   );
 
   const cmdCtx = useCallback(
-    (cmd: CommandEntry) =>
-      [
-        {
-          label: "Send",
-          icon: <Send size={12} />,
-          onClick: () => handleSend(cmd),
-          disabled: !activeTabId,
-        },
-        {
-          label: "Edit",
-          icon: <Edit3 size={12} />,
-          onClick: () => {
-            setEditing(cmd);
-            setEditingNew(false);
-          },
-        },
-        {
-          label: "Duplicate",
-          icon: <Copy size={12} />,
-          onClick: () => handleDuplicate(cmd),
-        },
-        cmd.pinned
-          ? {
-              label: "Unpin",
-              icon: <PinOff size={12} />,
-              onClick: () => handleTogglePin(cmd),
-            }
-          : {
-              label: "Pin",
-              icon: <Pin size={12} />,
-              onClick: () => handleTogglePin(cmd),
-            },
-        null, // separator
-        {
-          label: "Delete",
-          icon: <Trash2 size={12} />,
-          onClick: () => handleDelete(cmd.id),
-          danger: true,
-        },
-      ],
-    [handleSend, handleTogglePin, handleDelete, handleDuplicate, activeTabId],
-  );
-
-  const categoryCtx = useCallback(
-    (cat: string): (ContextMenuItem | null)[] => [
+    (cmd: CommandEntry): (ContextMenuItem | null)[] => [
       {
-        label: "New Command",
-        icon: <Plus size={12} />,
+        label: "Send",
+        icon: <Send size={12} />,
+        onClick: () => handleSend(cmd),
+        disabled: !activeTabId,
+      },
+      {
+        label: "Edit",
+        icon: <Edit3 size={12} />,
         onClick: () => {
-          setEditing({
-            id: "",
-            label: "",
-            command: "",
-            category: cat,
-            pinned: false,
-            last_used: null,
-            icon: null,
-            description: null,
-          });
-          setEditingNew(true);
+          setEditing(cmd);
+          setEditingNew(false);
         },
       },
       {
-        label: "Rename Group",
-        icon: <Edit3 size={12} />,
-        onClick: () => {
-          const newName = prompt("Rename group:", cat);
-          if (newName && newName.trim() && newName.trim() !== cat) {
-            // Rename: update all commands in this category
-            entries
-              .filter((e) => (e.category.trim() || "Uncategorized") === cat)
-              .forEach((e) => upsert({ ...e, category: newName.trim() }));
+        label: "Duplicate",
+        icon: <Copy size={12} />,
+        onClick: () => handleDuplicate(cmd),
+      },
+      {
+        label: "Move to Folder",
+        icon: <ArrowRightLeft size={12} />,
+        onClick: () => setMoveTarget({ ids: [cmd.id] }),
+      },
+      cmd.pinned
+        ? {
+            label: "Unpin",
+            icon: <PinOff size={12} />,
+            onClick: () => handleTogglePin(cmd),
+          }
+        : {
+            label: "Pin",
+            icon: <Pin size={12} />,
+            onClick: () => handleTogglePin(cmd),
+          },
+      null,
+      {
+        label: "Delete",
+        icon: <Trash2 size={12} />,
+        onClick: () => handleDelete(cmd.id),
+        danger: true,
+      },
+    ],
+    [handleSend, handleTogglePin, handleDelete, handleDuplicate, activeTabId],
+  );
+
+  const folderCtx = useCallback(
+    (node: TreeNode): (ContextMenuItem | null)[] => {
+      const items: (ContextMenuItem | null)[] = [
+        {
+          label: "New Command",
+          icon: <Plus size={12} />,
+          onClick: () => openNewCommandDialog(node.path),
+        },
+      ];
+
+      if (node.depth < 2) {
+        items.push({
+          label: "New Subfolder",
+          icon: <FolderPlus size={12} />,
+          onClick: () => setNewFolderPrompt({ parentPath: node.path }),
+        });
+      }
+
+      items.push(
+        {
+          label: "Rename",
+          icon: <Edit3 size={12} />,
+          onClick: () => {
+            const newName = prompt("Rename folder:", node.name);
+            if (newName?.trim() && newName.trim() !== node.name) {
+              const parts = node.path.split("/");
+              parts[parts.length - 1] = newName.trim();
+              renameFolder(node.path, parts.join("/"));
+            }
+          },
+        },
+        null,
+        {
+          label: "Delete Folder",
+          icon: <Trash2 size={12} />,
+          onClick: () => {
+            const msg = node.isEmpty
+              ? `Delete folder "${node.path}"?`
+              : `Delete folder "${node.path}" and all its commands?`;
+            if (confirm(msg)) {
+              const collectIds = (n: TreeNode): string[] => [
+                ...n.commands.map((c) => c.id),
+                ...n.children.flatMap(collectIds),
+              ];
+              collectIds(node).forEach((id) => remove(id));
+              removeEmptyFolder(node.path);
+            }
+          },
+          danger: true,
+        },
+      );
+
+      return items;
+    },
+    [openNewCommandDialog, renameFolder, remove, removeEmptyFolder],
+  );
+
+  const emptyCtx = useCallback(
+    (): (ContextMenuItem | null)[] => [
+      {
+        label: "New Command",
+        icon: <Plus size={12} />,
+        onClick: () => openNewCommandDialog(""),
+      },
+      {
+        label: "New Folder",
+        icon: <FolderPlus size={12} />,
+        onClick: () => setNewFolderPrompt({ parentPath: "" }),
+      },
+      {
+        label: "Paste",
+        icon: <ClipboardPaste size={12} />,
+        onClick: async () => {
+          try {
+            const text = await navigator.clipboard.readText();
+            if (text.trim()) openNewCommandDialog("", text.trim());
+          } catch {
+            // clipboard not available
           }
         },
       },
       null,
       {
-        label: "Delete Group",
-        icon: <Trash2 size={12} />,
+        label: sortMode === "name" ? "Sort: Name ✓" : "Sort: Name",
+        icon: <ArrowDownAZ size={12} />,
         onClick: () => {
-          if (confirm(`Delete group "${cat}" and all its commands?`)) {
-            entries
-              .filter((e) => (e.category.trim() || "Uncategorized") === cat)
-              .forEach((e) => remove(e.id));
-          }
+          localStorage.setItem("cmd-sort", "name");
+          setSortMode("name");
         },
-        danger: true,
+      },
+      {
+        label: sortMode === "recent" ? "Sort: Last Used ✓" : "Sort: Last Used",
+        icon: <Clock size={12} />,
+        onClick: () => {
+          localStorage.setItem("cmd-sort", "recent");
+          setSortMode("recent");
+        },
       },
     ],
-    [entries, upsert, remove],
+    [sortMode, openNewCommandDialog],
   );
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── Collect folder paths for move-to dropdown ─────────────────────────
+
+  const folderPathsForMove = useMemo(() => {
+    const paths: string[] = [""]; // Uncategorized
+    for (const p of allFolderPaths) {
+      if (p !== "Uncategorized") paths.push(p);
+    }
+    return paths;
+  }, [allFolderPaths]);
+
+  // ── Render helpers ────────────────────────────────────────────────────
+
+  const renderNode = useCallback(
+    (node: TreeNode): React.ReactNode => {
+      const isCollapsed = collapsed.has(node.path);
+      const hasChildren = node.children.length > 0;
+      const hasContent = node.commands.length > 0 || hasChildren;
+      const indent = node.depth * 16;
+
+      return (
+        <div key={node.path}>
+          {/* Folder header */}
+          {node.path !== "Uncategorized" && (
+            <button
+              onClick={() => toggleCollapse(node.path)}
+              onContextMenu={(e) => showCtx(e, folderCtx(node))}
+              className="flex items-center gap-1 w-full pr-2 py-0.5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
+              style={{ paddingLeft: 8 + indent }}
+            >
+              {hasContent ? (
+                isCollapsed ? (
+                  <ChevronRight size={11} className="flex-shrink-0" />
+                ) : (
+                  <ChevronDown size={11} className="flex-shrink-0" />
+                )
+              ) : (
+                <span className="w-[11px] flex-shrink-0" />
+              )}
+              {isCollapsed ? (
+                <FolderClosed size={11} className="flex-shrink-0" />
+              ) : (
+                <FolderOpen size={11} className="flex-shrink-0" />
+              )}
+              <span className="flex-1 text-left truncate">{node.name}</span>
+              {node.isEmpty ? (
+                <span className="text-[10px] tabular-nums opacity-50 italic">
+                  empty
+                </span>
+              ) : (
+                <span className="text-[10px] tabular-nums opacity-60">
+                  {node.commands.length}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Command items */}
+          {!isCollapsed &&
+            node.commands.map((cmd) => (
+              <div key={cmd.id}>
+                <div
+                  onDoubleClick={() => handleSend(cmd)}
+                  onContextMenu={(e) => showCtx(e, cmdCtx(cmd))}
+                  title="Double-click to send"
+                  className={`flex items-center gap-1.5 pr-1.5 py-1 hover:bg-[var(--surface-hover)] transition-colors rounded-sm
+                    ${cmd.pinned ? "border-l-2 border-[var(--accent)]" : ""}`}
+                  style={{
+                    paddingLeft: node.path === "Uncategorized" ? 20 : 24 + indent,
+                  }}
+                >
+                  <span className="flex-shrink-0 text-xs leading-none w-4 text-center">
+                    {cmd.icon || "-"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] text-[var(--text-primary)] leading-tight truncate block">
+                      {cmd.label || cmd.command}
+                    </span>
+                    {cmd.description && (
+                      <span className="text-[10px] text-[var(--text-muted)] leading-tight truncate block">
+                        {cmd.description}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSend(cmd);
+                    }}
+                    disabled={!activeTabId}
+                    className="flex-shrink-0 p-0.5 text-[var(--color-success)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Send to terminal"
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+          {/* Child folders */}
+          {!isCollapsed && hasChildren && (
+            <>{node.children.map(renderNode)}</>
+          )}
+        </div>
+      );
+    },
+    [
+      collapsed,
+      toggleCollapse,
+      showCtx,
+      folderCtx,
+      handleSend,
+      cmdCtx,
+      activeTabId,
+    ],
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onContextMenu={(e) => { e.preventDefault(); showCtx(e, emptyCtx()); }}>
       {/* Search */}
       <div className="relative px-2 pb-1">
         <Search
@@ -291,184 +603,17 @@ export default function CommandPanel() {
         />
       </div>
 
-      {/* Command groups */}
-      <div
-        className="flex-1 overflow-y-auto px-1"
-        onContextMenu={(e) =>
-          showCtx(e, [
-            {
-              label: "New Command",
-              icon: <Plus size={12} />,
-              onClick: () => {
-                setEditing({
-                  id: "",
-                  label: "",
-                  command: "",
-                  category: "",
-                  pinned: false,
-                  last_used: null,
-                  icon: null,
-                  description: null,
-                });
-                setEditingNew(true);
-              },
-            },
-            {
-              label: "New Group",
-              icon: <FolderPlus size={12} />,
-              onClick: () => {
-                const name = prompt("Group name:");
-                if (name?.trim()) {
-                  upsert({
-                    id: crypto.randomUUID(),
-                    label: "",
-                    command: "# placeholder",
-                    category: name.trim(),
-                    pinned: false,
-                    last_used: null,
-                    icon: null,
-                    description: null,
-                  });
-                }
-              },
-            },
-            {
-              label: "Paste",
-              icon: <ClipboardPaste size={12} />,
-              onClick: async () => {
-                try {
-                  const text = await navigator.clipboard.readText();
-                  if (text.trim()) {
-                    setEditing({
-                      id: "",
-                      label: "",
-                      command: text.trim(),
-                      category: "",
-                      pinned: false,
-                      last_used: null,
-                      icon: null,
-                      description: null,
-                    });
-                    setEditingNew(true);
-                  }
-                } catch {
-                  // clipboard not available
-                }
-              },
-            },
-          ])
-        }
-      >
-        {grouped.length === 0 && (
+      {/* Command tree */}
+      <div className="flex-1 overflow-y-auto px-1 min-h-0">
+        {tree.length === 0 && (
           <div className="flex items-center justify-center h-20 text-[11px] text-[var(--text-muted)]">
             {search ? "No matches" : "No saved commands"}
           </div>
         )}
-
-        {(() => {
-          let flatIdx = 0;
-          return grouped.map(([cat, cmds]) => {
-            const isCollapsed = collapsed.has(cat);
-            return (
-              <div key={cat} className="mb-0.5">
-                {/* Category header */}
-                <button
-                  onClick={() => toggleCollapse(cat)}
-                  onContextMenu={(e) => showCtx(e, categoryCtx(cat))}
-                  className="flex items-center gap-1 w-full px-2 py-0.5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
-                >
-                  {isCollapsed ? (
-                    <ChevronRight size={11} />
-                  ) : (
-                    <ChevronDown size={11} />
-                  )}
-                  <FolderOpen size={11} />
-                  <span className="flex-1 text-left truncate">{cat}</span>
-                  <span className="text-[10px] tabular-nums opacity-60">
-                    {cmds.length}
-                  </span>
-                </button>
-
-                {/* Command items */}
-                {!isCollapsed &&
-                  cmds.map((cmd) => {
-                    const idx = flatIdx++;
-                    return (
-                      <div key={cmd.id} className="group">
-                        <div
-                          ref={bindDragItem(idx)}
-                          onDoubleClick={() => handleSend(cmd)}
-                          onContextMenu={(e) => showCtx(e, cmdCtx(cmd))}
-                          title="Double-click to send"
-                          className={`flex items-center gap-1.5 pl-5 pr-1.5 py-1 hover:bg-[var(--surface-hover)] transition-colors cursor-grab active:cursor-grabbing rounded-sm
-                            ${cmd.pinned ? "border-l-2 border-[var(--accent)] pl-[18px]" : ""}
-                            ${dragging === idx ? "opacity-30" : ""}
-                            ${dragOver === idx ? "border-t-2 border-t-[var(--accent)]" : ""}`}
-                          style={dragOver === idx ? { transform: "translateY(1px)" } : undefined}
-                        >
-                          {/* Icon */}
-                          <span className="flex-shrink-0 text-xs leading-none w-4 text-center">
-                            {cmd.icon || "-"}
-                          </span>
-
-                          {/* Label + description */}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[11px] text-[var(--text-primary)] leading-tight truncate block">
-                              {cmd.label || cmd.command}
-                            </span>
-                            {cmd.description && (
-                              <span className="text-[10px] text-[var(--text-muted)] leading-tight truncate block">
-                                {cmd.description}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Send button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSend(cmd);
-                            }}
-                            disabled={!activeTabId}
-                            className="flex-shrink-0 p-0.5 text-[var(--color-success)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Send to terminal"
-                          >
-                            <Send size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            );
-          });
-        })()}
+        {tree.map(renderNode)}
       </div>
 
-      {/* New Command button */}
-      <div className="px-2 py-1.5 border-t border-[var(--border-subtle)]">
-        <button
-          onClick={() => {
-            setEditing({
-              id: "",
-              label: "",
-              command: "",
-              category: "",
-              pinned: false,
-              last_used: null,
-              icon: null,
-              description: null,
-            });
-            setEditingNew(true);
-          }}
-          className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
-        >
-          <Plus size={13} />
-          <span>New Command</span>
-        </button>
-      </div>
-
-      {/* Context menu portal */}
+      {/* Context menu */}
       {ctx && (
         <ContextMenu
           items={ctx.items}
@@ -478,11 +623,12 @@ export default function CommandPanel() {
         />
       )}
 
-      {/* Edit Dialog */}
+      {/* Edit dialog */}
       <CommandEditDialog
         entry={editing}
         isNew={editingNew}
         open={editing !== null}
+        folderPaths={allFolderPaths}
         onClose={() => {
           setEditing(null);
           setEditingNew(false);
@@ -492,12 +638,32 @@ export default function CommandPanel() {
           setEditing(null);
           setEditingNew(false);
         }}
-        existingCategories={Object.keys(
-          Object.fromEntries(
-            entries.map((e) => [e.category.trim() || "Uncategorized", true]),
-          ),
-        ).filter((c) => c !== "Uncategorized")}
       />
+
+      {/* Move-to dialog */}
+      {moveTarget && (
+        <MoveDialog
+          ids={moveTarget.ids}
+          folderPaths={folderPathsForMove}
+          onMove={handleMoveTo}
+          onClose={() => setMoveTarget(null)}
+        />
+      )}
+
+      {/* New-folder prompt */}
+      {newFolderPrompt && (
+        <NewFolderDialog
+          parentPath={newFolderPrompt.parentPath}
+          onConfirm={(name) => {
+            const fullPath = newFolderPrompt.parentPath
+              ? newFolderPrompt.parentPath + "/" + name
+              : name;
+            addEmptyFolder(fullPath);
+            setNewFolderPrompt(null);
+          }}
+          onClose={() => setNewFolderPrompt(null)}
+        />
+      )}
     </div>
   );
 }
@@ -508,16 +674,16 @@ function CommandEditDialog({
   entry,
   isNew,
   open,
+  folderPaths,
   onClose,
   onSave,
-  existingCategories,
 }: {
   entry: CommandEntry | null;
   isNew: boolean;
   open: boolean;
+  folderPaths: string[];
   onClose: () => void;
   onSave: (e: CommandEntry) => void;
-  existingCategories: string[];
 }) {
   const [label, setLabel] = useState("");
   const [command, setCommand] = useState("");
@@ -560,7 +726,6 @@ function CommandEditDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-3 mt-2">
-          {/* Icon */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] text-[var(--text-secondary)]">
               Icon (emoji)
@@ -573,7 +738,6 @@ function CommandEditDialog({
             />
           </div>
 
-          {/* Label */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] text-[var(--text-secondary)]">Label</label>
             <Input
@@ -586,7 +750,6 @@ function CommandEditDialog({
             />
           </div>
 
-          {/* Command */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] text-[var(--text-secondary)]">
               Command
@@ -600,7 +763,6 @@ function CommandEditDialog({
             />
           </div>
 
-          {/* Description */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] text-[var(--text-secondary)]">
               Description (optional)
@@ -614,28 +776,24 @@ function CommandEditDialog({
             />
           </div>
 
-          {/* Category */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] text-[var(--text-secondary)]">
               Category
-              {existingCategories.length > 0 && (
-                <span className="ml-1 opacity-60">
-                  (existing: {existingCategories.join(", ")})
-                </span>
-              )}
             </label>
             <Input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-              placeholder="Group name (optional)"
+              placeholder="Folder/Subfolder (e.g. Docker/Containers)"
               className="h-8 text-[12px]"
               list="cmd-categories"
             />
             <datalist id="cmd-categories">
-              {existingCategories.map((c) => (
-                <option key={c} value={c} />
-              ))}
+              {folderPaths
+                .filter((c) => c !== "Uncategorized")
+                .map((c) => (
+                  <option key={c} value={c} />
+                ))}
             </datalist>
           </div>
 
@@ -651,6 +809,120 @@ function CommandEditDialog({
               className="text-[11px] h-7"
             >
               Save
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Move dialog ────────────────────────────────────────────────────────────
+
+function MoveDialog({
+  ids,
+  folderPaths,
+  onMove,
+  onClose,
+}: {
+  ids: string[];
+  folderPaths: string[];
+  onMove: (ids: string[], target: string) => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState("");
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle>Move to Folder</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 mt-2">
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="w-full h-8 rounded-sm border-2 border-transparent bg-[var(--bg-surface)] px-2 text-[12px] text-[var(--text-primary)] outline-none focus:border-[var(--border-focus)]"
+          >
+            <option value="">-- Select folder --</option>
+            <option value="">Uncategorized</option>
+            {folderPaths
+              .filter((p) => p && p !== "Uncategorized")
+              .map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+          </select>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onMove(ids, selected)}
+              className="text-[11px] h-7"
+            >
+              Move
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── New-folder dialog ──────────────────────────────────────────────────────
+
+function NewFolderDialog({
+  parentPath,
+  onConfirm,
+  onClose,
+}: {
+  parentPath: string;
+  onConfirm: (name: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+
+  const handleConfirm = () => {
+    const trimmed = name.trim();
+    if (trimmed) onConfirm(trimmed);
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle>New Folder</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 mt-2">
+          {parentPath && (
+            <p className="text-[11px] text-[var(--text-muted)]">
+              Parent: {parentPath}
+            </p>
+          )}
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleConfirm(); }}
+            placeholder="Folder name"
+            className="h-8 text-[12px]"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-[11px] h-7">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleConfirm}
+              disabled={!name.trim()}
+              className="text-[11px] h-7"
+            >
+              Create
             </Button>
           </div>
         </div>

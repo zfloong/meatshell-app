@@ -120,7 +120,7 @@ export default function Sidebar() {
         {/* Panel fills remaining height */}
         <div className="flex-1 overflow-y-auto">
           {tab === "sessions" ? <SessionManager /> : (
-            <div className="px-2 pb-2">
+            <div className="h-full flex flex-col px-2">
               <CommandPanel />
             </div>
           )}

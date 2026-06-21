@@ -46,7 +46,7 @@ import ContextMenu, { type ContextMenuItem } from "@/components/ui/context-menu"
 
 // ── Types ────────────────────────────────────────────────────────────────
 
-type SortColumn = "name" | "size" | "modified" | "mode";
+type SortColumn = "name" | "size";
 type SortDir = "asc" | "desc";
 
 interface TransferState {
@@ -90,25 +90,6 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)}G`;
 }
 
-function formatTime(unix: number): string {
-  if (!unix) return "";
-  const d = new Date(unix * 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const today = new Date();
-  if (d.toDateString() === today.toDateString())
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function formatMode(mode: number): string {
-  if (!mode) return "----------";
-  const types: Record<number, string> = { 0o040000: "d", 0o120000: "l", 0o010000: "p", 0o140000: "s", 0o060000: "b", 0o020000: "c" };
-  let s = types[mode & 0o170000] || "-";
-  const rwx = ["---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"];
-  s += rwx[(mode >> 6) & 7] + rwx[(mode >> 3) & 7] + rwx[mode & 7];
-  return s;
-}
-
 function fileIcon(name: string) {
   const ext = name.split(".").pop()?.toLowerCase() || "";
   const codeExts = ["sh","bash","zsh","py","js","ts","jsx","tsx","rs","go","java","c","cpp","h","hpp","rb","php","pl","lua","sql","yaml","yml","json","toml","xml","css","scss","html","htm","vue","svelte","dockerfile","makefile","cmake"];
@@ -133,6 +114,7 @@ export default function FileExplorer() {
   const tabs = useSessionStore((s) => s.tabs);
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const setSftpStats = useSessionStore((s) => s.setSftpStats);
 
   const [cwd, setCwd] = useState("/");
   const [entries, setEntries] = useState<RemoteEntry[]>([]);
@@ -358,6 +340,19 @@ export default function FileExplorer() {
     return filtered;
   }, [entries, showHidden]);
 
+  // ── Report stats to global status bar ─────────────────────────────────
+  useEffect(() => {
+    if (!activeTab || activeTab.status !== "connected" || activeTab.session.kind !== "ssh") {
+      setSftpStats(null);
+      return;
+    }
+    setSftpStats({
+      folders: filterEntries.filter((e) => e.is_dir).length,
+      files: filterEntries.filter((e) => !e.is_dir && e.name !== "..").length,
+      selected: selected.size,
+    });
+  }, [filterEntries, selected, activeTab?.status]);
+
   const sortedEntries = useMemo(() => {
     const sorted = [...filterEntries];
     sorted.sort((a, b) => {
@@ -367,8 +362,6 @@ export default function FileExplorer() {
       let cmp = 0;
       if (sortCol === "name") cmp = a.name.localeCompare(b.name);
       else if (sortCol === "size") cmp = a.size - b.size;
-      else if (sortCol === "modified") cmp = a.modified - b.modified;
-      else if (sortCol === "mode") cmp = a.mode - b.mode;
       return sortDir === "asc" ? cmp : -cmp;
     });
     return sorted;
@@ -527,8 +520,6 @@ export default function FileExplorer() {
   );
 
   // ── Rendering ──────────────────────────────────────────────────────────
-  const numFolders = filterEntries.filter(e => e.is_dir).length;
-  const numFiles = filterEntries.filter(e => !e.is_dir).length;
 
   return (
     <div className="flex flex-col h-full">
@@ -740,12 +731,6 @@ export default function FileExplorer() {
                 <th className="text-right pr-2 w-16 cursor-pointer select-none hover:text-[var(--accent)] transition-colors" onClick={() => toggleSort("size")}>
                   <span className="text-[var(--text-secondary)] text-[10px] uppercase tracking-wider">Size {sortIndicator("size")}</span>
                 </th>
-                <th className="text-right pr-2 w-20 cursor-pointer select-none hover:text-[var(--accent)] transition-colors" onClick={() => toggleSort("modified")}>
-                  <span className="text-[var(--text-secondary)] text-[10px] uppercase tracking-wider">Modified {sortIndicator("modified")}</span>
-                </th>
-                <th className="text-left pr-2 w-[72px] cursor-pointer select-none hover:text-[var(--accent)] transition-colors" onClick={() => toggleSort("mode")}>
-                  <span className="text-[var(--text-secondary)] text-[10px] uppercase tracking-wider">Perm {sortIndicator("mode")}</span>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -782,12 +767,6 @@ export default function FileExplorer() {
                     <td className="pr-2 text-right tabular-nums text-[var(--text-secondary)]">
                       {e.is_dir ? "" : formatSize(e.size)}
                     </td>
-                    <td className="pr-2 text-right tabular-nums text-[var(--text-secondary)]">
-                      {formatTime(e.modified)}
-                    </td>
-                    <td className="pr-2 text-left tabular-nums text-[var(--text-muted)] font-mono text-[10px]" title={formatMode(e.mode)}>
-                      {formatMode(e.mode)}
-                    </td>
                   </tr>
                 );
               })}
@@ -796,39 +775,25 @@ export default function FileExplorer() {
         )}
       </div>
 
-      {/* ── Status bar ───────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-3 py-[2px] border-t border-[var(--border-subtle)] flex items-center gap-2 text-[10px] text-[var(--text-muted)] min-h-[20px]">
-        {!transfer.done ? (
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            {transfer.isUpload ? <Upload size={10} className="text-[var(--accent)] flex-shrink-0" /> : <Download size={10} className="text-[var(--accent)] flex-shrink-0" />}
-            <span className="truncate flex-1 min-w-0">{transfer.name}</span>
-            <span className="tabular-nums flex-shrink-0">
-              {transfer.total > 0
-                ? `${Math.round((transfer.transferred / transfer.total) * 100)}%`
-                : formatSize(transfer.transferred)}
-            </span>
-            <div className="w-16 h-1 rounded-full bg-[var(--border-subtle)] overflow-hidden flex-shrink-0">
-              <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
-                style={{ width: transfer.total > 0 ? `${Math.min((transfer.transferred / transfer.total) * 100, 100)}%` : "30%" }} />
-            </div>
+      {/* ── Transfer progress ────────────────────────────────────────────── */}
+      {!transfer.done && (
+        <div className="flex-shrink-0 px-3 py-[2px] border-t border-[var(--border-subtle)] flex items-center gap-2 text-[10px] text-[var(--text-muted)] min-h-[20px]">
+          {transfer.isUpload ? <Upload size={10} className="text-[var(--accent)] flex-shrink-0" /> : <Download size={10} className="text-[var(--accent)] flex-shrink-0" />}
+          <span className="truncate flex-1 min-w-0">{transfer.name}</span>
+          <span className="tabular-nums flex-shrink-0">
+            {transfer.total > 0
+              ? `${Math.round((transfer.transferred / transfer.total) * 100)}%`
+              : formatSize(transfer.transferred)}
+          </span>
+          <div className="w-16 h-1 rounded-full bg-[var(--border-subtle)] overflow-hidden flex-shrink-0">
+            <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-300"
+              style={{ width: transfer.total > 0 ? `${Math.min((transfer.transferred / transfer.total) * 100, 100)}%` : "30%" }} />
           </div>
-        ) : (
-          <>
-            <span>{numFolders > 0 && `${numFolders} folder${numFolders !== 1 ? "s" : ""}`}
-              {numFolders > 0 && numFiles > 0 && ", "}
-              {numFiles > 0 && `${numFiles} file${numFiles !== 1 ? "s" : ""}`}
-              {numFolders === 0 && numFiles === 0 && "Empty"}</span>
-            {selected.size > 0 ? (
-              <span className="text-[var(--accent)]">{selected.size} selected</span>
-            ) : entries.length > 0 ? (
-              <span className="text-[var(--text-muted)] opacity-50">Ctrl/Shift+Click to select multiple</span>
-            ) : null}
-            {status && (
-              <span className="ml-auto truncate max-w-[120px]">{status}</span>
-            )}
-          </>
-        )}
-      </div>
+        </div>
+      )}
+      {status && (
+        <div className="flex-shrink-0 px-3 py-[2px] border-t border-[var(--border-subtle)] text-[10px] text-red-400">{status}</div>
+      )}
 
       {ctx && <ContextMenu items={ctx.items} x={ctx.x} y={ctx.y} onClose={() => setCtx(null)} />}
     </div>

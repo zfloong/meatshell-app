@@ -6,6 +6,9 @@ export default function StatusBar() {
   const tabs = useSessionStore((s) => s.tabs);
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const sftpStats = useSessionStore((s) => s.sftpStats);
+  const lastError = useSessionStore((s) => s.lastError);
+  const clearError = useSessionStore((s) => s.clearError);
 
   const [localStats, setLocalStats] = useState<SystemSnapshot | null>(null);
   const remoteStats = activeTab?.remoteStats ?? null;
@@ -31,6 +34,19 @@ export default function StatusBar() {
 
   return (
     <footer className="flex h-6 items-center bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] px-3 flex-shrink-0 gap-3">
+      {/* Error banner */}
+      {lastError && (
+        <div className="flex items-center gap-2 flex-shrink-0 text-[11px] text-red-400">
+          <span className="truncate max-w-[400px]">{lastError}</span>
+          <button
+            onClick={clearError}
+            className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors ml-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Left: connection status */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {activeTab ? (
@@ -50,8 +66,24 @@ export default function StatusBar() {
         )}
       </div>
 
-      {/* Center: inline system monitor */}
-      <div className="flex items-center gap-3 min-w-0 overflow-hidden text-[11px]">
+      {/* File explorer stats */}
+      {sftpStats && (sftpStats.folders > 0 || sftpStats.files > 0) && (
+        <div className="flex items-center gap-1 flex-shrink-0 ml-4 text-[11px] text-[var(--text-muted)]">
+          <span>
+            {sftpStats.folders > 0 && `${sftpStats.folders} folder${sftpStats.folders !== 1 ? "s" : ""}`}
+            {sftpStats.folders > 0 && sftpStats.files > 0 && ", "}
+            {sftpStats.files > 0 && `${sftpStats.files} file${sftpStats.files !== 1 ? "s" : ""}`}
+          </span>
+          {sftpStats.selected > 0 ? (
+            <span className="text-[var(--accent)]">{sftpStats.selected} selected</span>
+          ) : (
+            <span className="text-[var(--text-muted)] opacity-40">Ctrl/Shift+Click to select multiple</span>
+          )}
+        </div>
+      )}
+
+      {/* System monitor */}
+      <div className="flex items-center gap-3 ml-4 min-w-0 overflow-hidden text-[11px]">
         {remoteStats ? (
           // ── Remote SSH stats ──────────────────────────────────────────
           <>
