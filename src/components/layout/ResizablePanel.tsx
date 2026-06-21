@@ -9,7 +9,7 @@ export default function ResizablePanel() {
   const height = useUIStore((s) => s.bottomPanelHeight);
   const setBottomPanelHeight = useUIStore((s) => s.setBottomPanelHeight);
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
   const startY = useRef(0);
   const startHeight = useRef(0);
@@ -54,14 +54,14 @@ export default function ResizablePanel() {
       className="flex flex-col flex-shrink-0"
       style={{ height }}
     >
-      {/* draggable split bar */}
+      {/* Draggable split bar — 4px, accent on hover */}
       <div
         onMouseDown={onMouseDown}
-        className="h-1 bg-[var(--border)] hover:bg-[var(--primary)] cursor-row-resize transition-colors flex-shrink-0"
+        className="h-1 bg-transparent hover:bg-[var(--accent)] cursor-row-resize transition-colors flex-shrink-0"
       />
 
-      {/* panel body */}
-      <div className="flex-1 bg-[var(--surface)] flex items-center justify-center text-sm text-[var(--text-secondary)] overflow-hidden">
+      {/* Panel body */}
+      <div className="flex-1 bg-[var(--bg-surface)] flex items-center justify-center text-sm text-[var(--text-secondary)] overflow-hidden">
         <span>SFTP Panel</span>
       </div>
     </div>

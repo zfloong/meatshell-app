@@ -4,31 +4,29 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[--primary] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default:
-          "bg-[--primary] text-[--background] shadow hover:opacity-90",
+        primary:
+          "bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--accent-border)] hover:bg-[rgba(79,173,255,0.25)] hover:border-[rgba(79,173,255,0.5)]",
         destructive:
-          "bg-[--error] text-[--background] shadow-sm hover:opacity-90",
+          "bg-transparent text-[var(--color-danger)] border border-[rgba(217,83,79,0.3)] hover:bg-[rgba(217,83,79,0.12)]",
         outline:
-          "border border-[--border] bg-transparent shadow-sm hover:bg-[--hover]",
-        secondary:
-          "bg-[--surface-bright] text-[--text] shadow-sm hover:opacity-80",
+          "border border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]",
         ghost:
-          "hover:bg-[--hover] text-[--text]",
-        link: "text-[--primary] underline-offset-4 hover:underline",
+          "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]",
+        link: "text-[var(--accent)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-10 px-8",
         icon: "h-9 w-9",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   },

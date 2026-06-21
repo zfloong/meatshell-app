@@ -4,12 +4,33 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { useSessionStore } from "@/stores/sessionStore";
 
+const terminalTheme = {
+  background: "#0d1117",
+  foreground: "#d4d4d4",
+  cursor: "#4fadff",
+  cursorAccent: "#0d1117",
+  selectionBackground: "rgba(79, 173, 255, 0.25)",
+  selectionForeground: "#ffffff",
+  black: "#1a1a2e",
+  red: "#d9534f",
+  green: "#5cb85c",
+  yellow: "#f0ad4e",
+  blue: "#4fadff",
+  magenta: "#c678dd",
+  cyan: "#56b6c2",
+  white: "#d4d4d4",
+  brightBlack: "#555555",
+  brightRed: "#ff6b6b",
+  brightGreen: "#7ec699",
+  brightYellow: "#f0ad4e",
+  brightBlue: "#6dbdff",
+  brightMagenta: "#d19a66",
+  brightCyan: "#7ec699",
+  brightWhite: "#ffffff",
+};
+
 /**
  * xterm.js terminal component bound to a single session tab.
- *
- * - Receives output via custom DOM events dispatched by sessionStore.
- * - Sends keystrokes back via Tauri command.
- * - Automatically resizes to fill its container.
  */
 export default function TerminalView({ tabId }: { tabId: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -23,29 +44,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     if (!containerRef.current) return;
 
     const term = new Terminal({
-      theme: {
-        background: "#1E1E2E",
-        foreground: "#CDD6F4",
-        cursor: "#89B4FA",
-        cursorAccent: "#1E1E2E",
-        selectionBackground: "rgba(137, 180, 250, 0.3)",
-        black: "#45475A",
-        red: "#F38BA8",
-        green: "#A6E3A1",
-        yellow: "#F9E2AF",
-        blue: "#89B4FA",
-        magenta: "#F5C2E7",
-        cyan: "#94E2D5",
-        white: "#BAC2DE",
-        brightBlack: "#585B70",
-        brightRed: "#F38BA8",
-        brightGreen: "#A6E3A1",
-        brightYellow: "#F9E2AF",
-        brightBlue: "#89B4FA",
-        brightMagenta: "#F5C2E7",
-        brightCyan: "#94E2D5",
-        brightWhite: "#A6ADC8",
-      },
+      theme: terminalTheme,
       fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace",
       fontSize: 14,
       lineHeight: 1.2,
@@ -67,7 +66,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     terminalRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    // Listen for output from the backend (dispatched by sessionStore)
+    // Listen for output from the backend
     const onData = (e: Event) => {
       const detail = (e as CustomEvent<string>).detail;
       if (detail) {
@@ -89,7 +88,6 @@ export default function TerminalView({ tabId }: { tabId: string }) {
 
   const containerCallback = useCallback(
     (node: HTMLDivElement | null) => {
-      // Cleanup old observer
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }

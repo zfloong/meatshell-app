@@ -18,7 +18,6 @@ interface ConnectDialogProps {
   onDelete: (id: string) => void;
 }
 
-/** New session defaults. */
 function emptySession(): SessionConfig {
   return {
     id: crypto.randomUUID(),
@@ -83,42 +82,40 @@ export default function ConnectDialog({
         value={value}
         onChange={(e) => set(e.target.value)}
         placeholder={opts?.placeholder}
-        className="h-8 text-sm bg-[var(--background)] border-[var(--border)]"
+        className="h-8 text-sm"
       />
     </label>
   );
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="flex flex-col max-w-[800px] max-h-[80vh] bg-[var(--surface)] border-[var(--border)] p-0">
-        <DialogHeader className="px-4 py-3 border-b border-[var(--border)]">
-          <DialogTitle className="text-sm font-semibold text-[var(--text)]">
-            Connect
-          </DialogTitle>
+      <DialogContent className="flex flex-col max-w-[800px] max-h-[80vh] p-0">
+        <DialogHeader className="px-4 py-3 border-b border-[var(--border-subtle)]">
+          <DialogTitle>Connect</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left: saved sessions list */}
-          <div className="w-[320px] border-r border-[var(--border)] flex flex-col">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
+          <div className="w-[320px] border-r border-[var(--border-subtle)] flex flex-col">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
               <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
                 Saved Sessions
               </span>
             </div>
             <div className="flex-1 overflow-auto">
               {sessions.length === 0 ? (
-                <div className="px-3 py-6 text-xs text-center text-[var(--text-secondary)]">
+                <div className="px-3 py-6 text-xs text-center text-[var(--text-muted)]">
                   No saved sessions
                 </div>
               ) : (
                 sessions.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--hover)] cursor-pointer border-b border-[var(--border)]/50 group"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--surface-hover)] cursor-pointer border-b border-[var(--border-subtle)]/50 group"
                     onClick={() => handleSelectSession(s)}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[var(--text)] truncate">{s.name || s.host}</div>
+                      <div className="text-sm text-[var(--text-primary)] truncate">{s.name || s.host}</div>
                       <div className="text-xs text-[var(--text-secondary)]">
                         {s.user}@{s.host}:{s.port}
                       </div>
@@ -126,7 +123,7 @@ export default function ConnectDialog({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:text-[var(--error)]"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDelete(s.id);
@@ -150,7 +147,7 @@ export default function ConnectDialog({
                 <select
                   value={form.kind}
                   onChange={(e) => setForm({ ...form, kind: e.target.value as SessionConfig["kind"], port: e.target.value === "ssh" ? 22 : e.target.value === "telnet" ? 23 : 0 })}
-                  className="h-8 text-sm bg-[var(--background)] border border-[var(--border)] rounded-md px-2 text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                  className="h-8 text-sm bg-[#151c22] border-2 border-transparent rounded-sm px-2 text-[var(--text-primary)] outline-none focus:border-[var(--border-focus)] transition-[border-color,background]"
                 >
                   <option value="ssh">SSH</option>
                   <option value="telnet">Telnet</option>
@@ -168,7 +165,7 @@ export default function ConnectDialog({
                   type="number"
                   value={form.port}
                   onChange={(e) => setForm({ ...form, port: Number(e.target.value) || 22 })}
-                  className="h-8 text-sm bg-[var(--background)] border-[var(--border)]"
+                  className="h-8 text-sm"
                 />
               </label>
             </div>
@@ -181,7 +178,7 @@ export default function ConnectDialog({
                 <select
                   value={form.auth}
                   onChange={(e) => setForm({ ...form, auth: e.target.value as SessionConfig["auth"] })}
-                  className="h-8 text-sm bg-[var(--background)] border border-[var(--border)] rounded-md px-2 text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                  className="h-8 text-sm bg-[#151c22] border-2 border-transparent rounded-sm px-2 text-[var(--text-primary)] outline-none focus:border-[var(--border-focus)] transition-[border-color,background]"
                 >
                   <option value="password">Password</option>
                   <option value="key">Private Key</option>
@@ -200,9 +197,10 @@ export default function ConnectDialog({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 mt-2 pt-3 border-t border-[var(--border)]">
+            <div className="flex items-center gap-2 mt-2 pt-3 border-t border-[var(--border-subtle)]">
               <Button
-                className="flex-1 gap-1.5 bg-[var(--primary)] text-[var(--background)] hover:brightness-110"
+                variant="primary"
+                className="flex-1 gap-1.5"
                 onClick={handleConnect}
                 disabled={!isValid}
               >

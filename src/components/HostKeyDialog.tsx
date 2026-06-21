@@ -26,9 +26,9 @@ export default function HostKeyDialog({ prompt, onClose }: HostKeyDialogProps) {
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-[420px] bg-[var(--surface)] border-[var(--border)]">
+      <DialogContent className="max-w-[420px]">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[var(--warning)]">
+          <DialogTitle className={prompt.changed ? "text-[var(--color-warning)]" : "text-[var(--text-heading)]"}>
             {prompt.changed ? "Host Key Changed!" : "Unknown Host Key"}
           </DialogTitle>
         </DialogHeader>
@@ -39,18 +39,18 @@ export default function HostKeyDialog({ prompt, onClose }: HostKeyDialogProps) {
             : "The authenticity of this host cannot be established."}
         </p>
 
-        <div className="flex flex-col gap-1.5 p-3 bg-[var(--background)] rounded-md mt-1">
+        <div className="flex flex-col gap-1.5 p-3 bg-[var(--bg-base)] rounded-sm mt-1">
           <div className="flex justify-between text-xs">
             <span className="text-[var(--text-secondary)]">Host</span>
-            <span className="text-[var(--text)] font-mono">{prompt.host}:{prompt.port}</span>
+            <span className="text-[var(--text-primary)] font-mono">{prompt.host}:{prompt.port}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-[var(--text-secondary)]">Key type</span>
-            <span className="text-[var(--text)]">{prompt.key_type}</span>
+            <span className="text-[var(--text-primary)]">{prompt.key_type}</span>
           </div>
           <div className="flex flex-col gap-0.5 text-xs">
             <span className="text-[var(--text-secondary)]">Fingerprint</span>
-            <span className="text-[var(--text)] font-mono break-all">{prompt.fingerprint}</span>
+            <span className="text-[var(--text-primary)] font-mono break-all">{prompt.fingerprint}</span>
           </div>
         </div>
 
@@ -58,7 +58,7 @@ export default function HostKeyDialog({ prompt, onClose }: HostKeyDialogProps) {
           <Button variant="outline" onClick={handleReject}>
             Reject
           </Button>
-          <Button className="bg-[var(--primary)] text-[var(--background)] hover:brightness-110" onClick={handleAccept}>
+          <Button variant="primary" onClick={handleAccept}>
             {prompt.changed ? "Accept Anyway" : "Accept"}
           </Button>
         </div>

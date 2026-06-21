@@ -37,7 +37,6 @@ export default function CommandPanel() {
   const [editingNew, setEditingNew] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  // Load on mount
   useEffect(() => {
     load();
   }, [load]);
@@ -54,12 +53,11 @@ export default function CommandPanel() {
         )
       : [...entries];
 
-    // Sort: pinned first, then by last_used desc
     filtered.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       const la = a.last_used ?? "";
       const lb = b.last_used ?? "";
-      return lb.localeCompare(la); // newest first
+      return lb.localeCompare(la);
     });
 
     const groups = new Map<string, CommandEntry[]>();
@@ -69,7 +67,6 @@ export default function CommandPanel() {
       groups.get(cat)!.push(e);
     }
 
-    // Sort groups: Uncategorized last, others alphabetically
     return [...groups.entries()].sort(([a], [b]) => {
       if (a === "Uncategorized") return 1;
       if (b === "Uncategorized") return -1;
@@ -91,7 +88,6 @@ export default function CommandPanel() {
   const handleSend = useCallback(
     async (cmd: CommandEntry) => {
       if (!activeTabId) return;
-      // Update last_used
       const updated = { ...cmd, last_used: new Date().toISOString() };
       await upsert(updated);
       await sendInput(activeTabId, cmd.command + "\n");
@@ -128,14 +124,14 @@ export default function CommandPanel() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter commands..."
-          className="w-full h-7 pl-8 pr-2 text-[11px] bg-[var(--background)] border border-[var(--border)] rounded text-[var(--text)] placeholder:text-[var(--text-secondary)]/50 outline-none focus:border-[var(--primary)]"
+          className="w-full h-7 pl-8 pr-2 text-[11px] bg-[#151c22] border-2 border-transparent rounded-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--border-focus)] transition-[border-color,background]"
         />
       </div>
 
       {/* Command groups */}
       <div className="flex-1 overflow-y-auto px-1">
         {grouped.length === 0 && (
-          <div className="flex items-center justify-center h-20 text-[11px] text-[var(--text-secondary)]">
+          <div className="flex items-center justify-center h-20 text-[11px] text-[var(--text-muted)]">
             {search ? "No matches" : "No saved commands"}
           </div>
         )}
@@ -147,7 +143,7 @@ export default function CommandPanel() {
               {/* Category header */}
               <button
                 onClick={() => toggleCollapse(cat)}
-                className="flex items-center gap-1 w-full px-2 py-0.5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--hover)] rounded transition-colors"
+                className="flex items-center gap-1 w-full px-2 py-0.5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
               >
                 {isCollapsed ? (
                   <ChevronRight size={11} />
@@ -166,29 +162,29 @@ export default function CommandPanel() {
                 cmds.map((cmd) => (
                   <div
                     key={cmd.id}
-                    className="group flex items-center gap-0.5 pl-5 pr-1 py-0.5 hover:bg-[var(--hover)] rounded-sm transition-colors"
+                    className="group flex items-center gap-0.5 pl-5 pr-1 py-0.5 hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
                   >
                     {/* Pin */}
                     <button
                       onClick={() => handleTogglePin(cmd)}
-                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 hover:text-[var(--warning)] transition-opacity"
+                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--color-warning)] transition-opacity"
                       title={cmd.pinned ? "Unpin" : "Pin to top"}
                     >
                       {cmd.pinned ? (
-                        <PinOff size={10} className="text-[var(--warning)]" />
+                        <PinOff size={10} className="text-[var(--color-warning)]" />
                       ) : (
-                        <Pin size={10} className="text-[var(--text-secondary)]" />
+                        <Pin size={10} />
                       )}
                     </button>
 
                     {/* Label + preview */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-[11px] text-[var(--text)] leading-tight truncate">
+                        <span className="text-[11px] text-[var(--text-primary)] leading-tight truncate">
                           {cmd.label || cmd.command}
                         </span>
                         {cmd.label && cmd.command !== cmd.label && (
-                          <span className="text-[10px] text-[var(--text-secondary)]/60 truncate leading-tight hidden group-hover:inline">
+                          <span className="text-[10px] text-[var(--text-muted)] truncate leading-tight hidden group-hover:inline">
                             {cmd.command.length > 40
                               ? cmd.command.slice(0, 40) + "…"
                               : cmd.command}
@@ -201,7 +197,7 @@ export default function CommandPanel() {
                     <button
                       onClick={() => handleSend(cmd)}
                       disabled={!activeTabId}
-                      className="flex-shrink-0 p-0.5 text-[var(--secondary)] hover:text-[var(--secondary)] hover:bg-[var(--hover)] rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-shrink-0 p-0.5 text-[var(--color-success)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Send to terminal"
                     >
                       <Send size={12} />
@@ -213,7 +209,7 @@ export default function CommandPanel() {
                         setEditing(cmd);
                         setEditingNew(false);
                       }}
-                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--primary)] transition-opacity"
+                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-opacity"
                       title="Edit"
                     >
                       <Pencil size={10} />
@@ -222,7 +218,7 @@ export default function CommandPanel() {
                     {/* Delete — visible on hover */}
                     <button
                       onClick={() => handleDelete(cmd.id)}
-                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--error)] transition-opacity"
+                      className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--color-danger)] transition-opacity"
                       title="Delete"
                     >
                       <Trash2 size={10} />
@@ -235,7 +231,7 @@ export default function CommandPanel() {
       </div>
 
       {/* New Command button */}
-      <div className="px-2 py-1.5 border-t border-[var(--border)]">
+      <div className="px-2 py-1.5 border-t border-[var(--border-subtle)]">
         <button
           onClick={() => {
             setEditing({
@@ -248,7 +244,7 @@ export default function CommandPanel() {
             });
             setEditingNew(true);
           }}
-          className="flex items-center justify-center gap-1 w-full py-1 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--hover)] rounded transition-colors"
+          className="flex items-center justify-center gap-1 w-full py-1 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-sm transition-colors"
         >
           <Plus size={12} />
           <span>New Command</span>
@@ -300,7 +296,6 @@ function CommandEditDialog({
   const [command, setCommand] = useState("");
   const [category, setCategory] = useState("");
 
-  // Sync form fields when entry changes
   useEffect(() => {
     if (entry) {
       setLabel(entry.label);
@@ -326,7 +321,7 @@ function CommandEditDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-sm text-[var(--text)]">
+          <DialogTitle>
             {isNew ? "New Command" : "Edit Command"}
           </DialogTitle>
         </DialogHeader>
@@ -386,6 +381,7 @@ function CommandEditDialog({
               Cancel
             </Button>
             <Button
+              variant="primary"
               size="sm"
               onClick={handleSave}
               disabled={!isValid}

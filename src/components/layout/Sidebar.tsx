@@ -3,7 +3,6 @@ import { PanelLeftOpen, PanelLeftClose, Activity, Zap, Terminal } from "lucide-r
 import { useUIStore } from "@/stores/uiStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { getSystemStats, type SystemSnapshot } from "@/lib/tauriCommands";
 import CommandPanel from "@/components/CommandPanel";
 
@@ -18,48 +17,45 @@ export default function Sidebar() {
     <>
       {/* Floating expand handle — visible only when sidebar is collapsed */}
       {!isOpen && (
-        <div className="flex-shrink-0 bg-[var(--surface)] border-r border-[var(--border)]">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-7 rounded-none text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--hover)]"
+        <div className="flex-shrink-0 bg-[var(--bg-surface)] border-r border-[var(--border-subtle)]">
+          <button
             onClick={toggleSidebar}
+            className="btn-icon h-10 w-7 rounded-none"
           >
             <PanelLeftOpen size={16} />
-          </Button>
+          </button>
         </div>
       )}
 
       <aside
-        className="flex flex-col bg-[var(--surface)] border-r border-[var(--border)] overflow-hidden flex-shrink-0 transition-all duration-200 ease-in-out"
+        className="sidebar-glass flex flex-col overflow-hidden flex-shrink-0 transition-[width] duration-200 ease-out"
         style={{ width: isOpen ? 260 : 0 }}
       >
         <div className="w-[260px] flex flex-col h-full">
-          <div className="flex items-center justify-between px-3 h-10 border-b border-[var(--border)]">
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 h-10 border-b border-[var(--border-subtle)]">
             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
               Resources
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-[var(--text-secondary)] hover:text-[var(--text)]"
+            <button
               onClick={toggleSidebar}
+              className="btn-icon h-7 w-7"
             >
               <PanelLeftClose size={16} />
-            </Button>
+            </button>
           </div>
 
           {/* Active sessions bar */}
           {tabs.length > 0 && (
-            <div className="border-b border-[var(--border)] px-2 py-1.5 flex flex-wrap gap-1">
+            <div className="border-b border-[var(--border-subtle)] px-2 py-1.5 flex flex-wrap gap-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1 px-2 py-0.5 text-[11px] rounded transition-colors truncate max-w-full ${
+                  className={`flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-sm transition-colors truncate max-w-full ${
                     tab.id === activeTabId
-                      ? "bg-[var(--primary)] text-[var(--background)]"
-                      : "bg-[var(--background)] text-[var(--text-secondary)] hover:text-[var(--text)]"
+                      ? "bg-[var(--accent-dim)] text-[var(--accent)]"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
                   }`}
                 >
                   <Terminal size={10} />
@@ -85,10 +81,7 @@ export default function Sidebar() {
               <SystemMonitorPanel />
             </TabsContent>
 
-            <TabsContent
-              value="commands"
-              className="flex-1 overflow-hidden"
-            >
+            <TabsContent value="commands" className="flex-1 overflow-hidden">
               <CommandPanel />
             </TabsContent>
           </Tabs>
@@ -98,12 +91,19 @@ export default function Sidebar() {
   );
 }
 
+// ── System Monitor ─────────────────────────────────────────────────────────
+
+function colorForPercent(pct: number): string {
+  if (pct >= 85) return "var(--color-danger)";
+  if (pct >= 60) return "var(--color-warning)";
+  return "var(--color-success)";
+}
+
 function SystemMonitorPanel() {
   const [stats, setStats] = useState<SystemSnapshot | null>(null);
 
   useEffect(() => {
     let active = true;
-
     const poll = async () => {
       try {
         const s = await getSystemStats();
@@ -112,7 +112,6 @@ function SystemMonitorPanel() {
         // ignore
       }
     };
-
     poll();
     const id = setInterval(poll, 2000);
     return () => {
@@ -131,34 +130,67 @@ function SystemMonitorPanel() {
 
   return (
     <div className="flex flex-col gap-3 p-2">
-      <StatBlock label="CPU" value={percent(stats.cpuPercent)} color="var(--primary)" bar={stats.cpuPercent} />
-      <StatBlock label="Memory" value={mib(stats.memUsedMib, stats.memTotalMib)} color="var(--info)" bar={stats.memPercent} />
+      <StatBlock
+        label="CPU"
+        value={percent(stats.cpuPercent)}
+        pct={stats.cpuPercent}
+      />
+      <StatBlock
+        label="Memory"
+        value={mib(stats.memUsedMib, stats.memTotalMib)}
+        pct={stats.memPercent}
+      />
       {stats.swapTotalMib > 0 && (
-        <StatBlock label="Swap" value={mib(stats.swapUsedMib, stats.swapTotalMib)} color="var(--warning)" bar={stats.swapPercent} />
+        <StatBlock
+          label="Swap"
+          value={mib(stats.swapUsedMib, stats.swapTotalMib)}
+          pct={stats.swapPercent}
+        />
       )}
-      <StatBlock label="NET ↓" value={formatBytes(stats.netRxPerSec)} color="var(--secondary)" />
-      <StatBlock label="NET ↑" value={formatBytes(stats.netTxPerSec)} color="var(--secondary)" />
+      <StatBlock label="NET ↓" value={formatBytes(stats.netRxPerSec)} />
+      <StatBlock label="NET ↑" value={formatBytes(stats.netTxPerSec)} />
     </div>
   );
 }
 
-function StatBlock({ label, value, color, bar }: { label: string; value: string; color: string; bar?: number }) {
+function StatBlock({
+  label,
+  value,
+  pct,
+}: {
+  label: string;
+  value: string;
+  pct?: number;
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-[var(--text-secondary)]">{label}</span>
-        <span style={{ color }} className="font-mono tabular-nums">{value}</span>
+    <div className="sidebar-card">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-xs text-[var(--text-secondary)]">{label}</span>
+        <span
+          className="font-mono text-xs tabular-nums"
+          style={{ color: pct != null ? colorForPercent(pct) : "var(--text-secondary)" }}
+        >
+          {value}
+        </span>
       </div>
-      {bar != null && (
-        <div className="h-1 bg-[var(--surface-bright)] rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, bar)}%`, backgroundColor: color }} />
+      {pct != null && (
+        <div className="h-[3px] bg-[var(--border-subtle)] rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-[width,background-color] duration-500"
+            style={{
+              width: `${Math.min(100, pct)}%`,
+              backgroundColor: colorForPercent(pct),
+            }}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function percent(v: number) { return `${v.toFixed(1)}%`; }
+function percent(v: number) {
+  return `${v.toFixed(1)}%`;
+}
 
 function mib(used: number, total: number) {
   if (total === 0) return "—";

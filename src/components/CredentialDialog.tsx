@@ -37,9 +37,9 @@ export default function CredentialDialog({ prompt, onClose }: CredentialDialogPr
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-[380px] bg-[var(--surface)] border-[var(--border)]">
+      <DialogContent className="max-w-[380px]">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[var(--text)]">
+          <DialogTitle>
             Login — {prompt.host}
           </DialogTitle>
         </DialogHeader>
@@ -55,7 +55,7 @@ export default function CredentialDialog({ prompt, onClose }: CredentialDialogPr
               <Input
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
-                className="h-8 text-sm bg-[var(--background)] border-[var(--border)]"
+                className="h-8 text-sm"
               />
             </label>
           )}
@@ -67,7 +67,7 @@ export default function CredentialDialog({ prompt, onClose }: CredentialDialogPr
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-8 text-sm bg-[var(--background)] border-[var(--border)]"
+                className="h-8 text-sm"
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
             </label>
@@ -78,7 +78,7 @@ export default function CredentialDialog({ prompt, onClose }: CredentialDialogPr
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              className="accent-[var(--primary)]"
+              className="accent-[var(--accent)]"
             />
             Remember for this session
           </label>
@@ -88,7 +88,7 @@ export default function CredentialDialog({ prompt, onClose }: CredentialDialogPr
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button className="bg-[var(--primary)] text-[var(--background)] hover:brightness-110" onClick={handleSubmit}>
+          <Button variant="primary" onClick={handleSubmit}>
             Login
           </Button>
         </div>

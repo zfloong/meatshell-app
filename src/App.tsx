@@ -33,19 +33,19 @@ export default function App() {
   }, [loadSessions, setupGlobal]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[var(--background)]">
+    <div className="flex flex-col h-full w-full bg-[var(--bg-base)]">
       <TitleBar onConnect={openConnect} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 bg-[var(--background)] overflow-hidden relative">
+          <main className="flex-1 bg-[var(--bg-base)] overflow-hidden relative">
             {activeTabId ? (
               <TerminalView key={activeTabId} tabId={activeTabId} />
             ) : (
               <div className="flex items-center justify-center h-full">
-                <span className="text-lg text-[var(--text-secondary)] select-none">
+                <span className="text-base text-[var(--text-muted)] select-none">
                   Terminal Area
                 </span>
               </div>
