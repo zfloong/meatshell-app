@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useUIStore, MIN_PANEL_HEIGHT, MAX_PANEL_HEIGHT } from "@/stores/uiStore";
+import FileExplorer from "./FileExplorer";
 
 /**
  * Bottom panel with a draggable split bar at the top.
@@ -61,8 +62,8 @@ export default function ResizablePanel() {
       />
 
       {/* Panel body */}
-      <div className="flex-1 bg-[var(--bg-surface)] flex items-center justify-center text-sm text-[var(--text-secondary)] overflow-hidden">
-        <span>SFTP Panel</span>
+      <div className="flex-1 bg-[var(--bg-surface)] overflow-hidden">
+        <FileExplorer />
       </div>
     </div>
   );

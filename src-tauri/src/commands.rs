@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use meatshell::command::{CommandEntry, CommandStore};
 use meatshell::config::{ConfigStore, Session as SessionConfig};
+use meatshell::sftp::SftpCommand;
 use meatshell::system::{SystemSampler, SystemSnapshot};
 use tauri::State;
 
@@ -149,4 +150,73 @@ pub fn get_system_stats(
     sampler: State<'_, std::sync::Mutex<SystemSampler>>,
 ) -> SystemSnapshot {
     sampler.lock().unwrap().sample()
+}
+
+// ── SFTP ─────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn sftp_spawn(
+    mgr: State<'_, SessionManager>,
+    app: tauri::AppHandle,
+    tab_id: String,
+    session: SessionConfig,
+) -> Result<(), String> {
+    mgr.spawn_sftp(app, &tab_id, session)
+}
+
+#[tauri::command]
+pub fn sftp_list_dir(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    path: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::ListDir(path))
+}
+
+#[tauri::command]
+pub fn sftp_download(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    remote: String,
+    local_dir: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::Download { remote, local_dir })
+}
+
+#[tauri::command]
+pub fn sftp_upload(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    local: String,
+    remote_dir: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::Upload { local, remote_dir })
+}
+
+#[tauri::command]
+pub fn sftp_mkdir(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    path: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::MkDir(path))
+}
+
+#[tauri::command]
+pub fn sftp_delete(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    path: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::Delete(path))
+}
+
+#[tauri::command]
+pub fn sftp_rename(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+    from: String,
+    to: String,
+) -> Result<(), String> {
+    mgr.sftp_send(&tab_id, SftpCommand::Rename { from, to })
 }

@@ -6,9 +6,11 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use tauri::{AppHandle, Emitter};
+use tokio::sync::mpsc;
 
 use meatshell::config::{Session as SessionConfig, SessionKind};
 use meatshell::serial::spawn_serial_session;
+use meatshell::sftp::{self, SftpCommand, SftpHandle};
 use meatshell::ssh::{self, SessionCommand, SessionEvent, SessionHandle};
 use meatshell::telnet::spawn_telnet_session;
 
@@ -18,6 +20,7 @@ use crate::prompts::PromptManager;
 pub struct SessionManager {
     pub runtime: tokio::runtime::Runtime,
     pub sessions: Arc<Mutex<HashMap<String, SessionHandle>>>,
+    pub sftp_handles: Arc<Mutex<HashMap<String, SftpHandle>>>,
 }
 
 impl SessionManager {
@@ -26,6 +29,7 @@ impl SessionManager {
             runtime: tokio::runtime::Runtime::new()
                 .expect("failed to create tokio runtime"),
             sessions: Arc::new(Mutex::new(HashMap::new())),
+            sftp_handles: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -87,6 +91,43 @@ impl SessionManager {
         Ok(())
     }
 
+    /// Spawn an SFTP worker for an existing SSH session.
+    pub fn spawn_sftp(
+        &self,
+        app: AppHandle,
+        tab_id: &str,
+        session: SessionConfig,
+    ) -> Result<(), String> {
+        if self.sftp_handles.lock().contains_key(tab_id) {
+            return Ok(()); // already open
+        }
+
+        let (events_tx, events_rx) = mpsc::unbounded_channel();
+        let handle = sftp::spawn_sftp(self.runtime.handle(), session, events_tx)
+            .map_err(|e| e.to_string())?;
+
+        self.sftp_handles
+            .lock()
+            .insert(tab_id.to_string(), handle);
+
+        let tid = tab_id.to_string();
+        self.runtime.spawn(async move {
+            forward_sftp_events(app, tid, events_rx).await;
+        });
+
+        Ok(())
+    }
+
+    /// Send a command to the SFTP worker for a tab.
+    pub fn sftp_send(&self, tab_id: &str, cmd: SftpCommand) -> Result<(), String> {
+        let handles = self.sftp_handles.lock();
+        let handle = handles
+            .get(tab_id)
+            .ok_or_else(|| format!("SFTP not open for tab {tab_id}"))?;
+        let _ = handle.commands.send(cmd);
+        Ok(())
+    }
+
     /// Send raw bytes to a session's PTY.
     pub fn send_input(&self, tab_id: &str, data: Vec<u8>) -> Result<(), String> {
         let sessions = self.sessions.lock();
@@ -111,6 +152,11 @@ impl SessionManager {
 
     /// Disconnect and remove a session.
     pub fn disconnect(&self, tab_id: &str) -> Result<(), String> {
+        // Close SFTP first
+        if let Some(handle) = self.sftp_handles.lock().remove(tab_id) {
+            let _ = handle.commands.send(SftpCommand::Close);
+        }
+        // Close terminal session
         let mut sessions = self.sessions.lock();
         if let Some(handle) = sessions.remove(tab_id) {
             let _ = handle.commands.send(SessionCommand::Close);
@@ -118,6 +164,8 @@ impl SessionManager {
         Ok(())
     }
 }
+
+// ── Terminal session event forwarding ──────────────────────────────────
 
 /// Forward events from the meatshell session event stream to Tauri's event bus.
 async fn forward_events(
@@ -209,7 +257,60 @@ async fn forward_events(
                 let _ = app.emit(&format!("sftp-status:{tab_id}"), status);
             }
             _ => {
-                // Other SFTP / ZMODEM events wired in future iterations.
+                // Other events handled by SFTP forwarder
+            }
+        }
+    }
+}
+
+// ── SFTP event forwarding ──────────────────────────────────────────────
+
+async fn forward_sftp_events(
+    app: AppHandle,
+    tab_id: String,
+    mut rx: mpsc::UnboundedReceiver<SessionEvent>,
+) {
+    while let Some(event) = rx.recv().await {
+        match event {
+            SessionEvent::SftpEntries { path, entries } => {
+                let _ = app.emit(
+                    &format!("sftp-entries:{tab_id}"),
+                    serde_json::json!({
+                        "path": path,
+                        "entries": entries,
+                    }),
+                );
+            }
+            SessionEvent::SftpStatus(status) => {
+                let _ = app.emit(&format!("sftp-status:{tab_id}"), status);
+            }
+            SessionEvent::SftpError(msg) => {
+                let _ = app.emit(&format!("sftp-error:{tab_id}"), msg);
+            }
+            SessionEvent::SftpTransfer {
+                id,
+                name,
+                is_upload,
+                transferred,
+                total,
+                state,
+                msg,
+            } => {
+                let _ = app.emit(
+                    &format!("sftp-transfer:{tab_id}"),
+                    serde_json::json!({
+                        "id": id,
+                        "name": name,
+                        "is_upload": is_upload,
+                        "transferred": transferred,
+                        "total": total,
+                        "state": state,
+                        "msg": msg,
+                    }),
+                );
+            }
+            _ => {
+                // ignore non-SFTP events
             }
         }
     }

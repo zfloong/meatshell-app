@@ -28,6 +28,13 @@ pub fn run() {
             commands::reply_host_key,
             commands::reply_credential,
             commands::get_system_stats,
+            commands::sftp_spawn,
+            commands::sftp_list_dir,
+            commands::sftp_download,
+            commands::sftp_upload,
+            commands::sftp_mkdir,
+            commands::sftp_delete,
+            commands::sftp_rename,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -146,3 +146,58 @@ export async function saveCommand(entry: CommandEntry): Promise<CommandEntry> {
 export async function deleteCommand(id: string): Promise<void> {
   return invoke("delete_command", { id });
 }
+
+// ── SFTP ──────────────────────────────────────────────────────────────────
+
+/** Matches meatshell::ssh::RemoteEntry (serde camelCase on Rust side → snake_case in JSON). */
+export interface RemoteEntry {
+  name: string;
+  full_path: string;
+  is_dir: boolean;
+  size: number;
+  modified: number;
+  mode: number;
+}
+
+export interface SftpEntriesPayload {
+  path: string;
+  entries: RemoteEntry[];
+}
+
+export interface SftpTransferPayload {
+  id: string;
+  name: string;
+  is_upload: boolean;
+  transferred: number;
+  total: number;
+  state: number; // 0=active, 1=done, 2=error
+  msg: string;
+}
+
+export async function sftpSpawn(tabId: string, session: SessionConfig): Promise<void> {
+  return invoke("sftp_spawn", { tabId, session });
+}
+
+export async function sftpListDir(tabId: string, path: string): Promise<void> {
+  return invoke("sftp_list_dir", { tabId, path });
+}
+
+export async function sftpDownload(tabId: string, remote: string, localDir: string): Promise<void> {
+  return invoke("sftp_download", { tabId, remote, localDir });
+}
+
+export async function sftpUpload(tabId: string, local: string, remoteDir: string): Promise<void> {
+  return invoke("sftp_upload", { tabId, local, remoteDir });
+}
+
+export async function sftpMkdir(tabId: string, path: string): Promise<void> {
+  return invoke("sftp_mkdir", { tabId, path });
+}
+
+export async function sftpDelete(tabId: string, path: string): Promise<void> {
+  return invoke("sftp_delete", { tabId, path });
+}
+
+export async function sftpRename(tabId: string, from: string, to: string): Promise<void> {
+  return invoke("sftp_rename", { tabId, from, to });
+}
