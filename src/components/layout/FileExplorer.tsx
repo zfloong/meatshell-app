@@ -556,7 +556,7 @@ export default function FileExplorer() {
                     className={`cursor-pointer transition-colors ${
                       sel ? "bg-[var(--surface-selected)]" : "hover:bg-[var(--surface-hover)]"
                     }`}
-                    onClick={(ev) => { if (isParent) goUp(); else toggleSelect(e.full_path, ev); }}
+                    onClick={(ev) => { ev.stopPropagation(); if (isParent) goUp(); else toggleSelect(e.full_path, ev); }}
                     onDoubleClick={() => { if (isDir && !isParent) navigate(e.full_path); }}
                     onContextMenu={(ev) => {
                       if (isParent) return;
