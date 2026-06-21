@@ -226,8 +226,7 @@ pub fn sftp_rename(
 pub fn reveal_in_explorer(path: String) {
     #[cfg(target_os = "windows")]
     std::process::Command::new("explorer")
-        .arg("/select,")
-        .arg(&path)
+        .arg(format!("/select,{path}"))
         .spawn()
         .ok();
 }

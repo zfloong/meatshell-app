@@ -49,6 +49,7 @@ export default function ConnectDialog({
 
   const handleConnect = () => {
     if (!isValid) return;
+    onSave(form);
     onConnect(form);
     onClose();
   };
@@ -205,7 +206,7 @@ export default function ConnectDialog({
                 disabled={!isValid}
               >
                 <Plus size={14} />
-                Connect
+                Connect & Save
               </Button>
               <Button
                 variant="outline"

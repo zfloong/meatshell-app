@@ -14,6 +14,21 @@ pub fn run() {
         .manage(SessionManager::new())
         .manage(Mutex::new(SystemSampler::new()))
         .manage(Arc::new(PromptManager::new()))
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Gracefully disconnect all active sessions before exit
+                api.prevent_close();
+                let mgr = window.state::<SessionManager>();
+                let ids: Vec<String> = mgr.sessions.lock().keys().cloned().collect();
+                for id in &ids {
+                    let _ = mgr.disconnect(id);
+                }
+                // Brief pause so the tokio runtime can flush
+                // SSH_MSG_DISCONNECT via channel.eof().
+                std::thread::sleep(std::time::Duration::from_millis(250));
+                window.close().ok();
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::list_sessions,
             commands::save_session,
