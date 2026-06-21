@@ -37,6 +37,9 @@ pub fn run() {
             commands::sftp_rename,
             commands::reveal_in_explorer,
             commands::open_in_editor,
+            commands::port_forward_start,
+            commands::port_forward_stop,
+            commands::port_forward_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

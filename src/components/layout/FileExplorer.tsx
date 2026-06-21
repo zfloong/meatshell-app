@@ -532,7 +532,7 @@ export default function FileExplorer() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Toolbar ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-0.5 px-2 py-1 border-b border-[var(--border-subtle)] flex-shrink-0">
+      <div className="flex items-center gap-0.5 px-2 py-1 border-b border-[var(--border-subtle)] flex-shrink-0 relative">
         {/* Action buttons */}
         <button onClick={goUp} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-sm transition-colors" title="Parent directory">
           <ArrowUp size={15} />
@@ -554,68 +554,26 @@ export default function FileExplorer() {
         </button>
         <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
 
-        {/* Separator */}
-        <span className="w-px h-4 mx-1 bg-[var(--border-subtle)]" />
-
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-0 text-[11px] font-mono ml-0.5 overflow-x-auto min-w-0">
-          {crumbs.map((c, i) => (
-            <span key={c.path} className="flex items-center flex-shrink-0">
-              {i > 0 && <span className="text-[var(--text-muted)] mx-0.5">/</span>}
-              <button
-                onClick={() => navigate(c.path)}
-                className={`hover:text-[var(--accent)] hover:underline transition-colors px-0.5 rounded-sm ${
-                  i === crumbs.length - 1 ? "text-[var(--text-primary)] font-medium" : "text-[var(--text-muted)]"
-                }`}
-              >
-                {c.label}
-              </button>
-            </span>
-          ))}
-        </div>
-
-        {/* Path input (always visible, next to breadcrumb) */}
-        <input
-          ref={pathInputRef}
-          className="flex-1 ml-1 px-1.5 py-0 h-5 text-[11px] font-mono bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-transparent focus:border-[var(--border-focus)] rounded-sm outline-none min-w-[60px] placeholder:text-[var(--text-muted)]"
-          value={pathInput}
-          onChange={(e) => setPathInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-          onBlur={submitPath}
-          placeholder="path"
-        />
-
-        {/* Hidden files toggle */}
-        <label className="flex items-center gap-0.5 ml-1 text-[10px] text-[var(--text-muted)] cursor-pointer select-none flex-shrink-0" title="Show hidden files (starting with .)">
-          <input
-            type="checkbox"
-            checked={showHidden}
-            onChange={(e) => setShowHidden(e.target.checked)}
-            className="w-3 h-3 accent-[var(--accent)] cursor-pointer"
-          />
-          <EyeOff size={11} className={showHidden ? "text-[var(--accent)]" : ""} />
-          <span>Hidden</span>
-        </label>
-
         {/* History */}
-        <button
-          onClick={() => setShowHistory(v => !v)}
-          className="relative p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-sm transition-colors ml-auto flex-shrink-0"
-          title="Download history"
-        >
-          <Clock size={14} />
-          {downloadHistory.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--accent)] text-[8px] font-bold text-white flex items-center justify-center leading-none">
-              {downloadHistory.length > 9 ? "9+" : downloadHistory.length}
-            </span>
-          )}
-        </button>
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-sm transition-colors"
+            title="Download history"
+          >
+            <Clock size={14} />
+            {downloadHistory.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--accent)] text-[8px] font-bold text-white flex items-center justify-center leading-none">
+                {downloadHistory.length > 9 ? "9+" : downloadHistory.length}
+              </span>
+            )}
+          </button>
 
-        {/* History dropdown */}
-        {showHistory && (
-          <>
-            <div className="fixed inset-0 z-20" onClick={() => setShowHistory(false)} />
-            <div className="absolute top-full right-1 mt-1 w-64 max-h-64 overflow-y-auto bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-md shadow-xl z-30">
+          {/* History dropdown */}
+          {showHistory && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowHistory(false)} />
+              <div className="absolute left-0 top-full mt-1 w-64 max-h-64 overflow-y-auto bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-md shadow-xl z-30">
               <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-[var(--border-subtle)]">
                 <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Recent Downloads</span>
                 <button onClick={() => setDownloadHistory([])} className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]">Clear</button>
@@ -646,6 +604,55 @@ export default function FileExplorer() {
                 ))
               )}
             </div>
+          </>
+        )}
+        </div>
+
+        {/* Separator */}
+        <span className="w-px h-4 mx-1 bg-[var(--border-subtle)]" />
+
+        {/* Breadcrumb — only when connected */}
+        {activeTab && activeTab.status === "connected" && (
+          <>
+            <div className="flex items-center gap-0 text-[11px] font-mono ml-0.5 overflow-x-auto min-w-0">
+              {crumbs.map((c, i) => (
+                <span key={c.path} className="flex items-center flex-shrink-0">
+                  {/* Skip separator between root "/" and first child, since root already is "/" */}
+                  {i > 1 && <span className="text-[var(--text-muted)] mx-0.5">/</span>}
+                  <button
+                    onClick={() => navigate(c.path)}
+                    className={`hover:text-[var(--accent)] hover:underline transition-colors px-0.5 rounded-sm ${
+                      i === crumbs.length - 1 ? "text-[var(--text-primary)] font-medium" : "text-[var(--text-muted)]"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            {/* Path input */}
+            <input
+              ref={pathInputRef}
+              className="flex-1 ml-1 px-1.5 py-0 h-5 text-[11px] font-mono bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-transparent focus:border-[var(--border-focus)] rounded-sm outline-none min-w-[60px] placeholder:text-[var(--text-muted)]"
+              value={pathInput}
+              onChange={(e) => setPathInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+              onBlur={submitPath}
+              placeholder="path"
+            />
+
+            {/* Hidden files toggle */}
+            <label className="flex items-center gap-0.5 ml-1 text-[10px] text-[var(--text-muted)] cursor-pointer select-none flex-shrink-0" title="Show hidden files (starting with .)">
+              <input
+                type="checkbox"
+                checked={showHidden}
+                onChange={(e) => setShowHidden(e.target.checked)}
+                className="w-3 h-3 accent-[var(--accent)] cursor-pointer"
+              />
+              <EyeOff size={11} className={showHidden ? "text-[var(--accent)]" : ""} />
+              <span>Hidden</span>
+            </label>
           </>
         )}
       </div>

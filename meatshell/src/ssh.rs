@@ -400,6 +400,11 @@ pub struct SessionHandle {
     pub commands: UnboundedSender<SessionCommand>,
     #[allow(dead_code)] // keep alive; detach on Drop is fine for v0.1
     pub join: JoinHandle<()>,
+    /// SSH connection handle for runtime port-forwarding management.
+    /// Set internally once the SSH session is fully established.
+    pub ssh_handle: Arc<std::sync::Mutex<Option<Arc<russh::client::Handle<ClientHandler>>>>>,
+    /// Clone of the session event sender, for external forwarding management.
+    pub events: UnboundedSender<SessionEvent>,
 }
 
 impl SessionHandle {
@@ -436,6 +441,9 @@ pub fn spawn_session(
     let (evt_tx, evt_rx) = mpsc::unbounded_channel::<SessionEvent>();
 
     let evt_tx_for_task = evt_tx.clone();
+    let ssh_cell: Arc<std::sync::Mutex<Option<Arc<russh::client::Handle<ClientHandler>>>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let ssh_cell_task = ssh_cell.clone();
     let join = runtime.spawn(async move {
         if let Err(err) = run_session(
             session,
@@ -443,6 +451,7 @@ pub fn spawn_session(
             evt_tx_for_task.clone(),
             initial_cols,
             initial_rows,
+            ssh_cell_task,
         )
         .await
         {
@@ -456,6 +465,8 @@ pub fn spawn_session(
             tab_id,
             commands: cmd_tx,
             join,
+            ssh_handle: ssh_cell,
+            events: evt_tx,
         },
         evt_rx,
     )
@@ -467,6 +478,7 @@ async fn run_session(
     events: UnboundedSender<SessionEvent>,
     initial_cols: u32,
     initial_rows: u32,
+    ssh_cell: Arc<std::sync::Mutex<Option<Arc<russh::client::Handle<ClientHandler>>>>>,
 ) -> Result<()> {
     let _ = events.send(SessionEvent::Status(format!(
         "{} {}@{}:{} ...",
@@ -715,6 +727,8 @@ async fn run_session(
         }
     }
     let handle = Arc::new(handle);
+    // Expose the SSH handle for runtime port-forwarding management
+    *ssh_cell.lock().unwrap() = Some(handle.clone());
     // Local (-L) and dynamic (-D) listen client-side; their tasks are aborted
     // on session exit.
     let mut forward_tasks: Vec<JoinHandle<()>> = Vec::new();
@@ -1175,11 +1189,23 @@ fn parse_net_dev_line(line: &str) -> Option<(String, (u64, u64))> {
 ///
 /// Carries the remote-forward (-R) map so we can service channels the server
 /// opens back to us: server bind-port → local `(host, port)` target (#56).
-pub(crate) struct ClientHandler {
-    pub(crate) host: String,
-    pub(crate) port: u16,
-    pub(crate) remote_forwards: std::collections::HashMap<u32, (String, u16)>,
-    pub(crate) events: UnboundedSender<SessionEvent>,
+pub struct ClientHandler {
+    pub host: String,
+    pub port: u16,
+    pub remote_forwards: std::collections::HashMap<u32, (String, u16)>,
+    pub events: UnboundedSender<SessionEvent>,
+}
+
+/// Summary of one active port-forward tunnel for the UI.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PortForwardInfo {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub bind_addr: String,
+    pub bind_port: u16,
+    pub host: String,
+    pub host_port: u16,
 }
 
 /// Shared host-key check used by both the shell and SFTP connections: trust a

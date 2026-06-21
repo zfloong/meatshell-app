@@ -209,3 +209,44 @@ export async function revealInExplorer(path: string): Promise<void> {
 export async function openInEditor(path: string): Promise<void> {
   return invoke("open_in_editor", { path });
 }
+
+// ── Port forwarding ───────────────────────────────────────────────────────
+
+export interface PortForwardConfig {
+  kind: string;   // "local" | "remote" | "dynamic"
+  name: string;
+  bind_addr: string;
+  bind_port: number;
+  host: string;
+  host_port: number;
+}
+
+export interface PortForwardInfo {
+  id: string;
+  kind: string;
+  name: string;
+  bind_addr: string;
+  bind_port: number;
+  host: string;
+  host_port: number;
+}
+
+export async function portForwardStart(
+  tabId: string,
+  forward: PortForwardConfig,
+): Promise<PortForwardInfo> {
+  return invoke<PortForwardInfo>("port_forward_start", { tabId, forward });
+}
+
+export async function portForwardStop(
+  tabId: string,
+  forwardId: string,
+): Promise<void> {
+  return invoke("port_forward_stop", { tabId, forwardId });
+}
+
+export async function portForwardList(
+  tabId: string,
+): Promise<PortForwardInfo[]> {
+  return invoke<PortForwardInfo[]>("port_forward_list", { tabId });
+}

@@ -1,14 +1,19 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUIStore, MIN_PANEL_HEIGHT, MAX_PANEL_HEIGHT } from "@/stores/uiStore";
 import FileExplorer from "./FileExplorer";
+import PortForwardPanel from "./PortForwardPanel";
+
+type BottomTab = "files" | "ports";
 
 /**
  * Bottom panel with a draggable split bar at the top.
  * Height is controlled via `uiStore.bottomPanelHeight`.
+ * Contains tabs: File Explorer | Port Forwarding.
  */
 export default function ResizablePanel() {
   const height = useUIStore((s) => s.bottomPanelHeight);
   const setBottomPanelHeight = useUIStore((s) => s.setBottomPanelHeight);
+  const [tab, setTab] = useState<BottomTab>("files");
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
@@ -61,9 +66,33 @@ export default function ResizablePanel() {
         className="h-1 bg-transparent hover:bg-[var(--accent)] cursor-row-resize transition-colors flex-shrink-0"
       />
 
+      {/* Tab bar */}
+      <div className="flex items-center border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] flex-shrink-0">
+        <button
+          onClick={() => setTab("files")}
+          className={`px-3 py-1 text-[11px] transition-colors border-b-2 -mb-[1px] ${
+            tab === "files"
+              ? "text-[var(--accent)] border-[var(--accent)]"
+              : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+          }`}
+        >
+          File Explorer
+        </button>
+        <button
+          onClick={() => setTab("ports")}
+          className={`px-3 py-1 text-[11px] transition-colors border-b-2 -mb-[1px] ${
+            tab === "ports"
+              ? "text-[var(--accent)] border-[var(--accent)]"
+              : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+          }`}
+        >
+          Port Forward
+        </button>
+      </div>
+
       {/* Panel body */}
       <div className="flex-1 bg-[var(--bg-surface)] overflow-hidden">
-        <FileExplorer />
+        {tab === "files" ? <FileExplorer /> : <PortForwardPanel />}
       </div>
     </div>
   );

@@ -3,8 +3,9 @@
 use std::sync::Arc;
 
 use meatshell::command::{CommandEntry, CommandStore};
-use meatshell::config::{ConfigStore, Session as SessionConfig};
+use meatshell::config::{ConfigStore, PortForward, Session as SessionConfig};
 use meatshell::sftp::SftpCommand;
+use meatshell::ssh::PortForwardInfo;
 use meatshell::system::{SystemSampler, SystemSnapshot};
 use tauri::State;
 
@@ -239,4 +240,34 @@ pub fn open_in_editor(path: String) {
         .args(["/c", "start", "", &path])
         .spawn()
         .ok();
+}
+
+// ── Port forwarding ──────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn port_forward_start(
+    mgr: State<'_, SessionManager>,
+    app: tauri::AppHandle,
+    tab_id: String,
+    forward: PortForward,
+) -> Result<PortForwardInfo, String> {
+    mgr.start_forward(&app, &tab_id, forward)
+}
+
+#[tauri::command]
+pub fn port_forward_stop(
+    mgr: State<'_, SessionManager>,
+    app: tauri::AppHandle,
+    tab_id: String,
+    forward_id: String,
+) -> Result<(), String> {
+    mgr.stop_forward(&app, &tab_id, &forward_id)
+}
+
+#[tauri::command]
+pub fn port_forward_list(
+    mgr: State<'_, SessionManager>,
+    tab_id: String,
+) -> Vec<PortForwardInfo> {
+    mgr.list_forwards(&tab_id)
 }

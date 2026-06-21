@@ -1,17 +1,21 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import { useUIStore, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from "@/stores/uiStore";
 import CommandPanel from "@/components/CommandPanel";
+import SessionManager from "@/components/SessionManager";
+
+type SidebarTab = "sessions" | "commands";
 
 /**
  * Sidebar with proportional resize and collapse/expand support.
- * One-line Tauri drag region header + embedded CommandPanel.
+ * One-line Tauri drag region header + tabbed panels (Sessions / Commands).
  */
 export default function Sidebar() {
   const isOpen = useUIStore((s) => s.isSidebarOpen);
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const sidebarWidth = useUIStore((s) => s.sidebarWidth);
   const setSidebarWidth = useUIStore((s) => s.setSidebarWidth);
+  const [tab, setTab] = useState<SidebarTab>("sessions");
 
   const dragging = useRef(false);
   const startX = useRef(0);
@@ -76,7 +80,7 @@ export default function Sidebar() {
           data-tauri-drag-region
         >
           <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wide no-drag">
-            Commands
+            {tab === "sessions" ? "Sessions" : "Commands"}
           </span>
           <button
             onClick={toggleSidebar}
@@ -89,9 +93,37 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Command panel fills remaining height */}
-        <div className="flex-1 overflow-y-auto px-2 pb-2">
-          <CommandPanel />
+        {/* Tab bar */}
+        <div className="flex items-center border-b border-[var(--border-subtle)] flex-shrink-0">
+          <button
+            onClick={() => setTab("sessions")}
+            className={`flex-1 py-1 text-[10px] font-medium transition-colors border-b-2 -mb-[1px] ${
+              tab === "sessions"
+                ? "text-[var(--accent)] border-[var(--accent)]"
+                : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Sessions
+          </button>
+          <button
+            onClick={() => setTab("commands")}
+            className={`flex-1 py-1 text-[10px] font-medium transition-colors border-b-2 -mb-[1px] ${
+              tab === "commands"
+                ? "text-[var(--accent)] border-[var(--accent)]"
+                : "text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Commands
+          </button>
+        </div>
+
+        {/* Panel fills remaining height */}
+        <div className="flex-1 overflow-y-auto">
+          {tab === "sessions" ? <SessionManager /> : (
+            <div className="px-2 pb-2">
+              <CommandPanel />
+            </div>
+          )}
         </div>
 
         {/* Resize handle — right edge, 4px wide */}
