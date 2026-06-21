@@ -15,7 +15,7 @@ interface CommandState {
   remove: (id: string) => Promise<void>;
 }
 
-export const useCommandStore = create<CommandState>((set, get) => ({
+export const useCommandStore = create<CommandState>((set) => ({
   entries: [],
   loading: false,
 

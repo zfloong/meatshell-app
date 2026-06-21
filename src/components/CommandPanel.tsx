@@ -301,13 +301,13 @@ function CommandEditDialog({
   const [category, setCategory] = useState("");
 
   // Sync form fields when entry changes
-  const [lastId, setLastId] = useState<string | null>(null);
-  if (entry && entry.id !== lastId) {
-    setLastId(entry.id);
-    setLabel(entry.label);
-    setCommand(entry.command);
-    setCategory(entry.category);
-  }
+  useEffect(() => {
+    if (entry) {
+      setLabel(entry.label);
+      setCommand(entry.command);
+      setCategory(entry.category);
+    }
+  }, [entry?.id]);
 
   const isValid = (label || command).trim().length > 0;
 
