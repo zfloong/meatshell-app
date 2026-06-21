@@ -205,3 +205,7 @@ export async function sftpRename(tabId: string, from: string, to: string): Promi
 export async function revealInExplorer(path: string): Promise<void> {
   return invoke("reveal_in_explorer", { path });
 }
+
+export async function openInEditor(path: string): Promise<void> {
+  return invoke("open_in_editor", { path });
+}

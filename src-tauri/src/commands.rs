@@ -230,3 +230,13 @@ pub fn reveal_in_explorer(path: String) {
         .spawn()
         .ok();
 }
+
+#[tauri::command]
+pub fn open_in_editor(path: String) {
+    // Open file with its default Windows application
+    #[cfg(target_os = "windows")]
+    std::process::Command::new("cmd")
+        .args(["/c", "start", "", &path])
+        .spawn()
+        .ok();
+}

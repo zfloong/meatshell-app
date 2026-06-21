@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { downloadDir } from "@tauri-apps/api/path";
+import { downloadDir, tempDir } from "@tauri-apps/api/path";
 import {
   Folder,
   FolderOpen,
@@ -24,6 +24,7 @@ import {
   Clock,
   FolderSearch,
   X,
+  Save,
 } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import {
@@ -35,6 +36,7 @@ import {
   sftpMkdir,
   sftpRename,
   revealInExplorer,
+  openInEditor,
   type RemoteEntry,
   type SftpEntriesPayload,
   type SftpTransferPayload,
@@ -67,6 +69,13 @@ interface DownloadRecord {
   size: number;
   status: "pending" | "done" | "failed";
   timestamp: number;
+}
+
+interface EditState {
+  localPath: string;
+  remotePath: string;
+  name: string;
+  pending: boolean;
 }
 
 const EMPTY_TRANSFER: TransferState = { name: "", transferred: 0, total: 0, isUpload: false, done: true };
@@ -135,6 +144,8 @@ export default function FileExplorer() {
   const [dragOver, setDragOver] = useState(false);
   const [downloadHistory, setDownloadHistory] = useState<DownloadRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [editing, setEditing] = useState<EditState | null>(null);
+  const editingRef = useRef<EditState | null>(null);
 
   const [sortCol, setSortCol] = useState<SortColumn>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -185,6 +196,12 @@ export default function FileExplorer() {
               prev.map(r => r.name === name && r.status === "pending"
                 ? { ...r, status: state === 1 ? "done" : "failed" as const }
                 : r));
+            // If this was an edit download, open the editor
+            if (editingRef.current && editingRef.current.pending && editingRef.current.name === name && state === 1) {
+              setEditing(prev => prev ? { ...prev, pending: false } : null);
+              editingRef.current = { ...editingRef.current, pending: false };
+              openInEditor(editingRef.current.localPath);
+            }
           }
           refreshCwd();
         }, 2500);
@@ -273,6 +290,31 @@ export default function FileExplorer() {
     },
     [activeTabId, addDownload],
   );
+
+  const openForEdit = useCallback(
+    async (entry: RemoteEntry) => {
+      if (!activeTabId || entry.is_dir) return;
+      const tmp = await tempDir();
+      const localPath = `${tmp.replace(/\\/g, "/").replace(/\/$/, "")}/meatshell-edit-${entry.name}`;
+      const state: EditState = { localPath, remotePath: entry.full_path, name: entry.name, pending: true };
+      setEditing(state);
+      editingRef.current = state;
+      sftpDownload(activeTabId, entry.full_path, tmp);
+    },
+    [activeTabId],
+  );
+
+  const saveEdit = useCallback(() => {
+    if (!editing || !activeTabId) return;
+    const remoteDir = editing.remotePath.replace(/\/[^/]*$/, "") || "/";
+    sftpUpload(activeTabId, editing.localPath, remoteDir);
+    setEditing(null);
+  }, [activeTabId, editing]);
+
+  const cancelEdit = useCallback(() => {
+    setEditing(null);
+    // Temp file will be cleaned up by OS eventually
+  }, []);
 
   const downloadSelected = useCallback(async () => {
     if (!activeTabId) return;
@@ -391,6 +433,8 @@ export default function FileExplorer() {
 
   const fileCtx = useCallback(
     (entry: RemoteEntry): (ContextMenuItem | null)[] => [
+      { label: "Edit", icon: <Edit3 size={12} />, onClick: () => openForEdit(entry) },
+      null,
       { label: "Download", icon: <Download size={12} />, onClick: () => downloadEntry(entry) },
       { label: "Download to...", icon: <FolderSearch size={12} />, onClick: () => downloadEntryTo(entry) },
       null,
@@ -410,7 +454,7 @@ export default function FileExplorer() {
           sftpDelete(activeTabId!, entry.full_path).then(refreshCwd);
       }, danger: true },
     ],
-    [activeTabId, downloadEntry, refreshCwd],
+    [activeTabId, downloadEntry, downloadEntryTo, openForEdit, refreshCwd],
   );
 
   const folderCtx = useCallback(
@@ -601,6 +645,41 @@ export default function FileExplorer() {
           </>
         )}
       </div>
+
+      {/* ── Edit banner ───────────────────────────────────────────────────── */}
+      {editing && (
+        <div className={`flex items-center gap-2 px-2.5 py-1.5 text-[11px] border-b flex-shrink-0 ${
+          editing.pending
+            ? "bg-[var(--surface-selected)] border-[var(--accent-border)] text-[var(--accent)]"
+            : "bg-green-900/20 border-green-700/30 text-green-300"
+        }`}>
+          {editing.pending ? (
+            <>
+              <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+              <span className="flex-1 truncate">Downloading {editing.name} for editing…</span>
+            </>
+          ) : (
+            <>
+              <Edit3 size={12} />
+              <span className="flex-1 truncate">Editing {editing.name}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">Save the file, then click →</span>
+              <button
+                onClick={saveEdit}
+                className="flex items-center gap-1 px-2 py-0.5 bg-green-600 hover:bg-green-500 text-white rounded-sm transition-colors text-[10px]"
+              >
+                <Save size={10} />
+                Save &amp; Upload
+              </button>
+              <button
+                onClick={cancelEdit}
+                className="p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                <X size={12} />
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── File list ────────────────────────────────────────────────────── */}
       <div
