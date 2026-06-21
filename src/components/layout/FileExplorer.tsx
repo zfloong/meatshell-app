@@ -392,12 +392,13 @@ export default function FileExplorer() {
   const multiCtx = useCallback(
     (): (ContextMenuItem | null)[] => {
       const selFiles = filterEntries.filter(e => selected.has(e.full_path) && !e.is_dir);
-      const items: (ContextMenuItem | null)[] = [
+      const n = selFiles.length;
+      return [
         {
-          label: `Download ${selected.size} item${selected.size > 1 ? "s" : ""}`,
+          label: n > 0 ? `Download ${n} file${n > 1 ? "s" : ""}` : "No files selected",
           icon: <Download size={12} />,
           onClick: downloadSelected,
-          disabled: selFiles.length === 0,
+          disabled: n === 0,
         },
         null,
         {
@@ -412,7 +413,6 @@ export default function FileExplorer() {
           danger: true,
         },
       ];
-      return items;
     },
     [activeTabId, filterEntries, selected, downloadSelected, refreshCwd],
   );
