@@ -1,6 +1,6 @@
 ﻿import { useCallback, useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X, Plus, HardDrive, HardDriveUpload } from "lucide-react";
+import { Minus, Square, X, Cable, HardDrive, HardDriveUpload } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import { rclone_mount, rclone_unmount, rclone_list } from "@/lib/tauriCommands";
 
@@ -69,11 +69,21 @@ export default function TitleBar({ onConnect }: TitleBarProps) {
     >
       {/* Logo + app name */}
       <div className="flex items-center gap-2.5 pl-4 pr-3 flex-shrink-0">
-        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-soft)] flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-[var(--accent)]/20">
-          M
-        </div>
+        <svg viewBox="0 0 64 64" className="w-7 h-7 rounded-lg flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#1a1a1a"/>
+              <stop offset="100%" stopColor="#0a0a0a"/>
+            </linearGradient>
+          </defs>
+          <rect width="64" height="64" rx="16" fill="url(#logo-bg)"/>
+          <text x="8" y="45" fontFamily="Arial Black, system-ui, sans-serif" fontSize="36" fontWeight="900" fill="#fff">&gt;_</text>
+          <rect x="47" y="17" width="4" height="24" rx="2" fill="#4ade80">
+            <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+          </rect>
+        </svg>
         <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wide">
-          肉壳
+          OpenTermo
         </span>
       </div>
 
@@ -125,13 +135,13 @@ export default function TitleBar({ onConnect }: TitleBarProps) {
           );
         })}
 
-        {/* Connect button — pill style */}
+        {/* Connect button — green pill style */}
         <button
           onClick={onConnect}
           onMouseDown={(e) => e.stopPropagation()}
-          className="no-drag flex items-center gap-1.5 px-3 h-8 text-sm text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-dim)] rounded-md transition-all duration-150 ml-0.5 flex-shrink-0"
+          className="no-drag flex items-center gap-1.5 px-3 h-8 text-sm text-[var(--text-muted)] bg-[var(--color-success)]/8 hover:text-[var(--color-success)] hover:bg-[var(--color-success)]/18 rounded-md transition-all duration-150 active:scale-95 ml-0.5 flex-shrink-0"
         >
-          <Plus size={17} />
+          <Cable size={17} />
           <span className="hidden sm:inline font-semibold">连接</span>
         </button>
       </div>

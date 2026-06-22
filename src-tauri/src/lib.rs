@@ -1,4 +1,5 @@
 ﻿mod commands;
+mod icon_data;
 mod prompts;
 mod session;
 
@@ -91,6 +92,18 @@ pub fn run() {
         .manage(SessionManager::new(rclone_path))
         .manage(Mutex::new(SystemSampler::new()))
         .manage(Arc::new(PromptManager::new()))
+        .setup(|app| {
+            // Set window icon from embedded raw RGBA
+            let icon = tauri::image::Image::new_owned(
+                icon_data::ICON_RGBA.to_vec(),
+                icon_data::ICON_WIDTH,
+                icon_data::ICON_HEIGHT,
+            );
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_icon(icon);
+            }
+            Ok(())
+        })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 // Gracefully disconnect all active sessions and unmount rclone

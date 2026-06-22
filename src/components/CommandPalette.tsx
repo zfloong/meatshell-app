@@ -16,6 +16,7 @@ export default function CommandPalette() {
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const tabs = useSessionStore((s) => s.tabs);
   const sendInput = useSessionStore((s) => s.sendInput);
+  const triggerScroll = useSessionStore((s) => s.triggerScroll);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
@@ -62,6 +63,7 @@ export default function CommandPalette() {
       if (!activeTabId) return;
       const resolved = resolveCommandTemplate(entry.command, activeTab?.session);
       sendInput(activeTabId, resolved + "\n");
+      triggerScroll(activeTabId);
       recordUsage(entry.id);
       setOpen(false);
       setTimeout(() => {

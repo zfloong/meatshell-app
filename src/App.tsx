@@ -39,14 +39,13 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 bg-[var(--bg-base)] overflow-hidden relative">
+        <div id="terminal-area" className="flex-1 overflow-hidden relative bg-[var(--bg-base)]">
             {tabs.length > 0 ? (
               tabs.map((tab) => (
                 <div
                   key={tab.id}
                   className="absolute inset-0"
-                  style={{ display: tab.id === activeTabId ? "flex" : "none" }}
+                  style={{ display: tab.id === activeTabId ? "block" : "none" }}
                 >
                   <TerminalView tabId={tab.id} />
                 </div>
@@ -59,8 +58,6 @@ export default function App() {
                 </span>
               </div>
             )}
-          </main>
-
         </div>
       </div>
 

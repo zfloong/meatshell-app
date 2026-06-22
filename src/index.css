@@ -199,7 +199,16 @@ body {
 
 /* Terminal bottom breathing room */
 .xterm-viewport {
-  padding-bottom:12px;
+  padding-bottom:4px;
+}
+
+
+/* Force cursor blink — WebView2 sometimes suppresses CSS animations */
+.xterm-cursor-blink {
+  animation: xterm-cursor-blink 1s step-end infinite !important;
+}
+@keyframes xterm-cursor-blink {
+  50% { opacity: 0; }
 }
 .status-dot {
   width:7px; height:7px; border-radius:50%; flex-shrink:0;

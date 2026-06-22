@@ -17,7 +17,7 @@ interface SettingsState {
 
 function loadTheme(): ThemeId {
   try {
-    const v = localStorage.getItem("meatshell-theme");
+    const v = localStorage.getItem("opentermo-theme");
     if (v === "classic" || v === "light") return v;
   } catch {}
   return "deep-blue";
@@ -33,33 +33,33 @@ function loadNumber(key: string, fallback: number): number {
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   theme: loadTheme(),
-  fontSize: loadNumber("meatshell-fontsize", 18),
-  accentHue: loadNumber("meatshell-accent-hue", 210),
-  glassOpacity: loadNumber("meatshell-glass-opacity", 0.78),
-  borderVisibility: loadNumber("meatshell-border-visibility", 0.16),
+  fontSize: loadNumber("opentermo-fontsize", 18),
+  accentHue: loadNumber("opentermo-accent-hue", 210),
+  glassOpacity: loadNumber("opentermo-glass-opacity", 0.78),
+  borderVisibility: loadNumber("opentermo-border-visibility", 0.16),
 
   setTheme: (t) => {
-    localStorage.setItem("meatshell-theme", t);
+    localStorage.setItem("opentermo-theme", t);
     set({ theme: t });
   },
   setFontSize: (s) => {
     const clamped = Math.max(12, Math.min(28, Math.round(s)));
-    localStorage.setItem("meatshell-fontsize", String(clamped));
+    localStorage.setItem("opentermo-fontsize", String(clamped));
     set({ fontSize: clamped });
   },
   setAccentHue: (h) => {
     const clamped = Math.max(0, Math.min(360, Math.round(h)));
-    localStorage.setItem("meatshell-accent-hue", String(clamped));
+    localStorage.setItem("opentermo-accent-hue", String(clamped));
     set({ accentHue: clamped });
   },
   setGlassOpacity: (o) => {
     const clamped = Math.round(o * 100) / 100;
-    localStorage.setItem("meatshell-glass-opacity", String(clamped));
+    localStorage.setItem("opentermo-glass-opacity", String(clamped));
     set({ glassOpacity: clamped });
   },
   setBorderVisibility: (v) => {
     const clamped = Math.round(v * 100) / 100;
-    localStorage.setItem("meatshell-border-visibility", String(clamped));
+    localStorage.setItem("opentermo-border-visibility", String(clamped));
     set({ borderVisibility: clamped });
   },
 }));

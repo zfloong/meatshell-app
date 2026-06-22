@@ -6,8 +6,8 @@ import {
   deleteCommand,
 } from "@/lib/tauriCommands";
 
-const LS_EMPTY_FOLDERS = "meatshell-empty-folders";
-const LS_USAGE_COUNTS = "meatshell-cmd-usage";
+const LS_EMPTY_FOLDERS = "opentermo-empty-folders";
+const LS_USAGE_COUNTS = "opentermo-cmd-usage";
 
 function loadEmptyFolders(): string[] {
   try {

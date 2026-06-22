@@ -11,7 +11,7 @@ function getTerminalTheme() {
   return {
     background: s.getPropertyValue("--bg-base").trim() || "#080c12",
     foreground: s.getPropertyValue("--text-primary").trim() || "#e9eef5",
-    cursor: s.getPropertyValue("--accent").trim() || "#5b9cf5",
+    cursor: "#ffffff",
     cursorAccent: s.getPropertyValue("--bg-base").trim() || "#080c12",
     selectionBackground: s.getPropertyValue("--accent-dim").trim() || "rgba(91,156,245,0.28)",
     selectionForeground: s.getPropertyValue("--text-inverse").trim() || "#ffffff",
@@ -37,7 +37,7 @@ function getTerminalTheme() {
 /** Duration (ms) of the green selection flash after copy. */
 const COPY_FLASH_MS = 200;
 
-const SEARCH_HISTORY_KEY = "meatshell-search-history";
+const SEARCH_HISTORY_KEY = "opentermo-search-history";
 const MAX_HISTORY = 20;
 
 /**
@@ -171,13 +171,32 @@ export default function TerminalView({ tabId }: { tabId: string }) {
       lineHeight: 1.2,
       cursorBlink: true,
       cursorStyle: "bar",
+      cursorWidth: 2,
       allowProposedApi: true,
     });
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(container);
+
+    // Focus must be deferred — xterm textarea needs a tick to mount in DOM
+    requestAnimationFrame(() => {
+      term.focus();
+      try { fitAddon.fit(); } catch {}
+    });
     fitAddon.fit();
+
+    // Block double-click entirely — WebView2 generates fake Ctrl+C when it
+    // detects selection after a double-click. By preventing xterm from handling
+    // dblclick (capture phase), no word selection = no fake Ctrl+C.
+    const blockDblClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    };
+    container.addEventListener('dblclick', blockDblClick, true);
+    document.fonts?.ready?.then(() => { try { fitAddon.fit(); } catch {} });
+
 
     // ── Search addon ──────────────────────────────────────────────────
     const searchAddon = new SearchAddon();
@@ -210,6 +229,18 @@ export default function TerminalView({ tabId }: { tabId: string }) {
         closeSearch();
         return false;
       }
+
+      if (e.ctrlKey && e.shiftKey && (e.key === "c" || e.key === "C")) {
+        const sel = term.getSelection();
+        if (sel) {
+          navigator.clipboard.writeText(sel).catch(() => {});
+        }
+        return false;
+      }
+
+
+
+
 
       return true;
     });
@@ -253,7 +284,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     container.addEventListener("mouseleave", onMouseLeave);
 
       // Right-click context menu for copy/paste
-      container.addEventListener("contextmenu", (e: MouseEvent) => {
+    container.addEventListener("contextmenu", (e: MouseEvent) => {
         e.preventDefault();
         const sel = term.getSelection();
         const hasSel = sel.length > 0;
@@ -288,9 +319,10 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     window.addEventListener(`terminal-data:${tabId}`, onData);
 
     return () => {
-      container.removeEventListener("mousedown", onMouseDown);
-      container.removeEventListener("mouseup", onMouseUp);
-      container.removeEventListener("mouseleave", onMouseLeave);
+      // [DISABLED] Select-to-copy cleanup
+      // container.removeEventListener("mousedown", onMouseDown);
+      // container.removeEventListener("mouseup", onMouseUp);
+      // container.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener(`terminal-data:${tabId}`, onData);
       term.dispose();
       terminalRef.current = null;
@@ -306,47 +338,48 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     }
   }, [theme]);
 
+  // ── Scroll to bottom when command panel triggers ───────────────
+  const triggerScroll = useSessionStore((s) => s.triggerScroll);
+  const scrollTrigger = useSessionStore((s) => s.scrollTrigger[tabId] ?? 0);
+  const scrollTriggerRef = useRef(scrollTrigger);
+  useEffect(() => {
+    if (scrollTrigger > scrollTriggerRef.current) {
+      scrollTriggerRef.current = scrollTrigger;
+      terminalRef.current?.scrollToBottom();
+    }
+  }, [scrollTrigger]);
 
-  // ── Resize terminal to fill container ────────────────────────────────
+
+  // ── Resize terminal to fill container ───────────────────────
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const containerCallback = useCallback(
     (node: HTMLDivElement | null) => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
       containerRef.current = node;
-
-      if (node) {
-        resizeObserverRef.current = new ResizeObserver(() => {
-          const fitAddon = fitAddonRef.current;
-          const term = terminalRef.current;
-          if (!fitAddon || !term) return;
-
-          try {
-            fitAddon.fit();
-            onResize(tabId, term.cols, term.rows);
-          } catch {
-            // Terminal may not be ready yet
-          }
-        });
-        resizeObserverRef.current.observe(node);
-      }
     },
-    [tabId, onResize],
+    [],
   );
 
-  // Cleanup resize observer on unmount
+  // Observe the terminal-area (a non-absolute flex child) for reliable resize events
   useEffect(() => {
-    return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
+    const area = document.getElementById("terminal-area");
+    if (!area) return;
+    const ro = new ResizeObserver(() => {
+      const fitAddon = fitAddonRef.current;
+      const term = terminalRef.current;
+      if (!fitAddon || !term) return;
+      try { fitAddon.fit(); } catch {}
+      // Never send resize with 0 cols/rows — breaks SSH channel
+      if (term.cols > 0 && term.rows > 0) {
+        onResize(tabId, term.cols, term.rows);
       }
-    };
-  }, []);
+    });
+    ro.observe(area);
+    resizeObserverRef.current = ro;
+    return () => ro.disconnect();
+  }, [tabId, onResize]);
 
-
-  // ── Search keyboard navigation in history dropdown ───────────────────
+  // navigation in history dropdown ───────────────────
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (historyVisible && searchHistory.length > 0) {
       if (e.key === "ArrowDown") {
@@ -421,8 +454,7 @@ export default function TerminalView({ tabId }: { tabId: string }) {
     <div className="absolute inset-0">
       <div
         ref={containerCallback}
-        className="h-full w-full"
-        style={{ padding: "4px 8px" }}
+        className="absolute inset-0"
       />
 
       {/* ── Search bar ───────────────────────────────────────────────── */}

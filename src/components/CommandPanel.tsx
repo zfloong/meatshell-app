@@ -80,6 +80,7 @@ export default function CommandPanel() {
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const tabs = useSessionStore((s) => s.tabs);
   const sendInput = useSessionStore((s) => s.sendInput);
+  const triggerScroll = useSessionStore((s) => s.triggerScroll);
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
   const [search, setSearch] = useState("");
@@ -163,6 +164,7 @@ export default function CommandPanel() {
     const selected = entries.filter((e) => selectedIds.has(e.id));
     const commands = selected.map((e) => resolveCommandTemplate(e.command, activeTab?.session ?? null)).join("\n");
     sendInput(activeTabId, commands);
+    triggerScroll(activeTabId);
     selected.forEach((e) => recordUsage(e.id));
     setSelectedIds(new Set());
   }, [activeTabId, activeTab, selectedIds, entries, sendInput, recordUsage]);
@@ -334,6 +336,7 @@ export default function CommandPanel() {
       const updated = { ...cmd, last_used: new Date().toISOString() };
       await upsert(updated);
       await sendInput(activeTabId, resolved);
+      triggerScroll(activeTabId);
       recordUsage(cmd.id);
       setTimeout(() => {
         document.querySelector<HTMLElement>('.xterm-helper-textarea')?.focus();
@@ -350,6 +353,7 @@ export default function CommandPanel() {
       await upsert(updated);
       // Send command + Enter to execute immediately
       await sendInput(activeTabId, resolved + "\r");
+      triggerScroll(activeTabId);
       recordUsage(cmd.id);
       setTimeout(() => {
         document.querySelector<HTMLElement>('.xterm-helper-textarea')?.focus();
@@ -720,7 +724,7 @@ export default function CommandPanel() {
               onClick={async () => {
                 const filePath = await save({
                   filters: [{ name: "JSON", extensions: ["json"] }],
-                  defaultPath: "meatshell-commands.json",
+                  defaultPath: "opentermo-commands.json",
                 });
                 if (filePath) {
                   await invoke("write_text_file", { path: filePath, content: exportAll() });

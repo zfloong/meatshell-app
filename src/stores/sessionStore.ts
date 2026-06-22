@@ -48,6 +48,8 @@ interface SessionState {
   credentialPrompt: CredentialPromptPayload | null;
   /** Last connection error message (auto-clears). */
   lastError: string | null;
+  /** Incremented to force terminal scroll-to-bottom from command panels. */
+  scrollTrigger: Record<string, number>;
   /** File explorer stats for status bar. */
 
   // Actions
@@ -65,6 +67,7 @@ interface SessionState {
   resize: (tabId: string, cols: number, rows: number) => Promise<void>;
   setActiveTab: (tabId: string) => void;
   clearError: () => void;
+  triggerScroll: (tabId: string) => void;
 
   // Dialog controls
   openConnectDialog: () => void;
@@ -87,6 +90,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   hostKeyPrompt: null,
   credentialPrompt: null,
   lastError: null,
+  scrollTrigger: {},
   _unlisteners: new Map(),
 
   // ── Session CRUD ───────────────────────────────────────────────────────
@@ -186,6 +190,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   clearError() {
     set({ lastError: null });
+  },
+
+  triggerScroll(tabId) {
+    set((s) => ({ scrollTrigger: { ...s.scrollTrigger, [tabId]: (s.scrollTrigger[tabId] || 0) + 1 } }));
   },
 
   // ── Dialog controls ────────────────────────────────────────────────────
