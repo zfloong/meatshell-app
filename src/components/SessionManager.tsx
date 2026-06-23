@@ -56,6 +56,11 @@ export default function SessionManager() {
       map[g].push(s);
     }
 
+    // Sort sessions within each group alphabetically
+    for (const g of Object.keys(map)) {
+      map[g].sort((a, b) => (a.name || a.host).localeCompare(b.name || b.host));
+    }
+
     // Sort: Default first, then alphabetical
     const keys = Object.keys(map).sort((a, b) => {
       if (a === "Default") return -1;
