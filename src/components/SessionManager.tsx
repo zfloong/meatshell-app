@@ -34,6 +34,7 @@ export default function SessionManager() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["Default"]));
   const [ctx, setCtx] = useState<CtxState | null>(null);
   const [search, setSearch] = useState("");
+  const [knownGroups, setKnownGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => { loadSessions(); }, [loadSessions]);
 
@@ -56,12 +57,12 @@ export default function SessionManager() {
       map[g].push(s);
     }
 
-    // Sort sessions within each group A-Z
-    for (const g of Object.keys(map)) {
-      map[g].sort((a, b) => (a.name || a.host).localeCompare(b.name || b.host));
+    // Inject known empty groups so they show in sidebar
+    for (const g of knownGroups) {
+      if (!map[g]) map[g] = [];
     }
 
-    // Sort sessions within each group alphabetically
+    // Sort sessions within each group A-Z
     for (const g of Object.keys(map)) {
       map[g].sort((a, b) => (a.name || a.host).localeCompare(b.name || b.host));
     }
@@ -119,7 +120,9 @@ export default function SessionManager() {
   const handleNewGroup = () => {
     const name = prompt("新分组名称：");
     if (!name || !name.trim()) return;
-    setExpanded((prev) => new Set(prev).add(name.trim()));
+    const g = name.trim();
+    setKnownGroups((prev) => new Set(prev).add(g));
+    setExpanded((prev) => new Set(prev).add(g));
   };
 
   const handleMoveToGroup = async (s: SessionConfig, group: string) => {
@@ -133,6 +136,31 @@ export default function SessionManager() {
     const g = name.trim();
     await save({ ...s, group: g });
     setExpanded((prev) => new Set(prev).add(g));
+    loadSessions();
+  };
+
+  const handleRenameGroup = async (oldName: string) => {
+    const newName = prompt("输入新分组名称：", oldName);
+    if (!newName || !newName.trim() || newName.trim() === oldName) return;
+    const target = newName.trim();
+    // Rename all sessions in this group
+    const targets = sessions.filter((s) => (s.group || "Default") === oldName);
+    for (const s of targets) {
+      await save({ ...s, group: target === "Default" ? "" : target });
+    }
+    // Update known groups
+    setKnownGroups((prev) => {
+      const next = new Set(prev);
+      next.delete(oldName);
+      if (target !== "Default") next.add(target);
+      return next;
+    });
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.delete(oldName);
+      next.add(target);
+      return next;
+    });
     loadSessions();
   };
 
@@ -234,6 +262,8 @@ export default function SessionManager() {
                   onClick={() => toggleGroup(group.path)}
                   onContextMenu={(e) => showCtx(e, [
                     { label: isExpanded ? "折叠" : "展开", icon: isExpanded ? <ChevronRight size={13} /> : <ChevronDown size={13} />, onClick: () => toggleGroup(group.path) },
+                    null,
+                    { label: "重命名", icon: <Edit3 size={13} />, onClick: () => handleRenameGroup(group.name) },
                   ])}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-[var(--surface-hover)] transition-colors group/gh"
                 >
