@@ -4,3 +4,10 @@ meatshell/target/
 Cargo.lock
 node_modules/
 dist/
+
+# Build artifacts
+src-tauri/gen/
+tsconfig.node.tsbuildinfo
+tsconfig.tsbuildinfo
+vite.config.d.ts
+work/
