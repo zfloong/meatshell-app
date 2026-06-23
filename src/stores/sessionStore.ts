@@ -1,4 +1,4 @@
-import { create } from "zustand";
+﻿import { create } from "zustand";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
   type SessionConfig,
@@ -42,6 +42,8 @@ interface SessionState {
   activeTabId: string | null;
   /** Whether the connect dialog is open. */
   connectDialogOpen: boolean;
+  /** Session being edited (null = creating new). */
+  editingSession: SessionConfig | null;
   /** Pending host-key confirmation prompt. */
   hostKeyPrompt: HostKeyPromptPayload | null;
   /** Pending credential prompt. */
@@ -70,7 +72,7 @@ interface SessionState {
   triggerScroll: (tabId: string) => void;
 
   // Dialog controls
-  openConnectDialog: () => void;
+  openConnectDialog: (editSession?: SessionConfig | null) => void;
   closeConnectDialog: () => void;
   dismissHostKey: () => void;
   dismissCredential: () => void;
@@ -87,6 +89,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   connectDialogOpen: false,
+  editingSession: null,
   hostKeyPrompt: null,
   credentialPrompt: null,
   lastError: null,
@@ -198,8 +201,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   // ── Dialog controls ────────────────────────────────────────────────────
 
-  openConnectDialog: () => set({ connectDialogOpen: true }),
-  closeConnectDialog: () => set({ connectDialogOpen: false }),
+  openConnectDialog: (editSession = null) => set({ connectDialogOpen: true, editingSession: editSession }),
+  closeConnectDialog: () => set({ connectDialogOpen: false, editingSession: null }),
   dismissHostKey: () => set({ hostKeyPrompt: null }),
   dismissCredential: () => set({ credentialPrompt: null }),
 

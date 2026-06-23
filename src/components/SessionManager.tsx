@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Trash2, Edit3, Monitor, Cable, Terminal,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Plus
 } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { SessionConfig } from "@/lib/tauriCommands";
@@ -23,14 +23,13 @@ export default function SessionManager() {
   const sessions = useSessionStore((s) => s.sessions);
   const loadSessions = useSessionStore((s) => s.loadSessions);
   const save = useSessionStore((s) => s.save);
+  const openConnectDialog = useSessionStore((s) => s.openConnectDialog);
   const remove = useSessionStore((s) => s.remove);
   const connect = useSessionStore((s) => s.connect);
   const tabs = useSessionStore((s) => s.tabs);
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const setActiveTab = useSessionStore((s) => s.setActiveTab);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<SessionConfig>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["Default"]));
   const [ctx, setCtx] = useState<CtxState | null>(null);
   const [search, setSearch] = useState("");
@@ -65,7 +64,6 @@ export default function SessionManager() {
 
     return keys.map((k) => ({ name: k, path: k, sessions: map[k] }));
   }, [sessions, search]);
-
   const toggleGroup = (path: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -74,15 +72,12 @@ export default function SessionManager() {
       return next;
     });
   };
-
   const isConnected = (id: string) =>
     tabs.some((t) => t.session.id === id && t.status === "connected");
-
   const isActive = (id: string) => {
     const tab = tabs.find((t) => t.session.id === id);
     return tab ? tab.id === activeTabId : false;
   };
-
   const kindIcon = (k: string) => {
     switch (k) {
       case "ssh": return <Terminal size={13} className="text-[var(--accent)]" />;
@@ -91,7 +86,6 @@ export default function SessionManager() {
       default: return <Terminal size={13} />;
     }
   };
-
   const handleConnect = (s: SessionConfig) => {
     const existingTab = tabs.find((t) => t.session.id === s.id);
     if (existingTab) {
@@ -100,30 +94,16 @@ export default function SessionManager() {
       connect(`tab-${s.id}-${Date.now()}`, s);
     }
   };
-
   const handleDelete = async (id: string) => {
     const s = sessions.find((x) => x.id === id);
     if (!s || !confirm(`删除会话 "${s.name || s.host}"?`)) return;
     await remove(id);
     loadSessions();
   };
-
   const startEdit = (s: SessionConfig) => {
-    setEditingId(s.id);
-    setEditForm({ ...s });
+    openConnectDialog(s);
   };
 
-  const cancelEdit = () => { setEditingId(null); setEditForm({}); };
-
-  const saveEdit = async () => {
-    if (!editingId) return;
-    const existing = sessions.find((s) => s.id === editingId);
-    if (!existing) return;
-    await save({ ...existing, ...editForm } as SessionConfig);
-    setEditingId(null);
-    setEditForm({});
-    loadSessions();
-  };
 
   const sessionCtx = (s: SessionConfig): (ContextMenuItem | null)[] => [
     { label: "连接", icon: <Terminal size={13} />, onClick: () => handleConnect(s) },
@@ -131,7 +111,6 @@ export default function SessionManager() {
     null,
     { label: "删除", icon: <Trash2 size={13} />, onClick: () => handleDelete(s.id), danger: true },
   ];
-
   const showCtx = (e: React.MouseEvent, items: (ContextMenuItem | null)[]) => {
     e.preventDefault();
     e.stopPropagation();
@@ -164,9 +143,24 @@ export default function SessionManager() {
       </div>
 
       {/* Groups - Clash Verge style cards */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-2 py-2 space-y-2">
+      <div
+        className="flex-1 overflow-y-auto min-h-0 px-2 py-2 space-y-2"
+        onContextMenu={(e) => {
+          // Only show on blank area (not on session items or group headers)
+          const target = e.target as HTMLElement;
+          if (target.closest('[data-session-item]') || target.closest('button')) return;
+          showCtx(e, [
+            { label: "新建连接", icon: <Plus size={13} />, onClick: () => openConnectDialog() },
+          ]);
+        }}
+      >
         {groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]">
+          <div
+            className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]"
+            onContextMenu={(e) => showCtx(e, [
+              { label: "新建连接", icon: <Plus size={13} />, onClick: () => openConnectDialog() },
+            ])}
+          >
             <Terminal size={28} className="opacity-25" />
             <span>{search ? "无匹配会话" : "暂无保存的会话"}</span>
           </div>
@@ -213,27 +207,7 @@ export default function SessionManager() {
                 {isExpanded && group.sessions.length > 0 && (
                   <div className="border-t border-[var(--border-subtle)] py-1.5 px-1 flex flex-col gap-1">
                     {group.sessions.map((s) => (
-                      <div key={s.id}>
-                        {editingId === s.id ? (
-                          <div className="px-4 py-2.5 space-y-2">
-                            <input
-                              value={editForm.name || ""}
-                              onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                              placeholder="名称"
-                              className="w-full px-2.5 py-1.5 text-sm bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-default)] rounded-md outline-none focus:border-[var(--accent)]"
-                            />
-                            <input
-                              value={editForm.host || ""}
-                              onChange={(e) => setEditForm((p) => ({ ...p, host: e.target.value }))}
-                              placeholder="主机"
-                              className="w-full px-2.5 py-1.5 text-sm bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-default)] rounded-md outline-none focus:border-[var(--accent)]"
-                            />
-                            <div className="flex gap-2">
-                              <button onClick={saveEdit} className="px-3 py-1.5 text-xs font-medium bg-[var(--accent)] text-white rounded-md hover:brightness-110 transition-all">保存</button>
-                              <button onClick={cancelEdit} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md transition-colors">取消</button>
-                            </div>
-                          </div>
-                        ) : (
+                      <div key={s.id} data-session-item>
                           <SessionItemMerged
                             session={s}
                             icon={kindIcon(s.kind)}
@@ -244,7 +218,6 @@ export default function SessionManager() {
                             onDelete={() => handleDelete(s.id)}
                             onContextMenu={(e: React.MouseEvent) => showCtx(e, sessionCtx(s))}
                           />
-                        )}
                       </div>
                     ))}
                   </div>
