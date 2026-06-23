@@ -56,6 +56,11 @@ export default function SessionManager() {
       map[g].push(s);
     }
 
+    // Sort sessions within each group A-Z
+    for (const g of Object.keys(map)) {
+      map[g].sort((a, b) => (a.name || a.host).localeCompare(b.name || b.host));
+    }
+
     // Sort sessions within each group alphabetically
     for (const g of Object.keys(map)) {
       map[g].sort((a, b) => (a.name || a.host).localeCompare(b.name || b.host));
@@ -110,13 +115,57 @@ export default function SessionManager() {
     openEditDialog(s.id);
   };
 
+  // ?? Group management ???????????????????????????????????????????
+  const handleNewGroup = () => {
+    const name = prompt("新分组名称：");
+    if (!name || !name.trim()) return;
+    setExpanded((prev) => new Set(prev).add(name.trim()));
+  };
 
-  const sessionCtx = (s: SessionConfig): (ContextMenuItem | null)[] => [
-    { label: "连接", icon: <Terminal size={13} />, onClick: () => handleConnect(s) },
-    { label: "编辑", icon: <Edit3 size={13} />, onClick: () => startEdit(s) },
-    null,
-    { label: "删除", icon: <Trash2 size={13} />, onClick: () => handleDelete(s.id), danger: true },
-  ];
+  const handleMoveToGroup = async (s: SessionConfig, group: string) => {
+    await save({ ...s, group });
+    loadSessions();
+  };
+
+  const handleMoveToNewGroup = async (s: SessionConfig) => {
+    const name = prompt("新分组名称：");
+    if (!name || !name.trim()) return;
+    const g = name.trim();
+    await save({ ...s, group: g });
+    setExpanded((prev) => new Set(prev).add(g));
+    loadSessions();
+  };
+
+
+  const sessionCtx = (s: SessionConfig): (ContextMenuItem | null)[] => {
+    // Gather all groups for move-to submenu
+    const groupNames = [...new Set(sessions.map((x) => x.group || "Default"))];
+    groupNames.sort((a, b) => {
+      if (a === "Default") return -1;
+      if (b === "Default") return 1;
+      return a.localeCompare(b);
+    });
+    const cur = s.group || "Default";
+    const moveItems: ContextMenuItem[] = groupNames
+      .filter((g) => g !== cur)
+      .map((g) => ({
+        label: g,
+        onClick: () => handleMoveToGroup(s, g === "Default" ? "" : g),
+      }));
+    moveItems.push({
+      label: "新建分组...",
+      icon: <Plus size={12} />,
+      onClick: () => handleMoveToNewGroup(s),
+    });
+
+    return [
+      { label: "连接", icon: <Terminal size={13} />, onClick: () => handleConnect(s) },
+      { label: "编辑", icon: <Edit3 size={13} />, onClick: () => startEdit(s) },
+      { label: "移动到分组", icon: <ChevronRight size={13} />, children: moveItems },
+      null,
+      { label: "删除", icon: <Trash2 size={13} />, onClick: () => handleDelete(s.id), danger: true },
+    ];
+  };
   const showCtx = (e: React.MouseEvent, items: (ContextMenuItem | null)[]) => {
     e.preventDefault();
     e.stopPropagation();
@@ -157,6 +206,7 @@ export default function SessionManager() {
           if (target.closest('[data-session-item]') || target.closest('button')) return;
           showCtx(e, [
             { label: "新建连接", icon: <Plus size={13} />, onClick: () => openConnectDialog() },
+            { label: "新建分组", icon: <Plus size={13} />, onClick: () => handleNewGroup() },
           ]);
         }}
       >
@@ -165,6 +215,7 @@ export default function SessionManager() {
             className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]"
             onContextMenu={(e) => showCtx(e, [
               { label: "新建连接", icon: <Plus size={13} />, onClick: () => openConnectDialog() },
+              { label: "新建分组", icon: <Plus size={13} />, onClick: () => handleNewGroup() },
             ])}
           >
             <Terminal size={28} className="opacity-25" />
