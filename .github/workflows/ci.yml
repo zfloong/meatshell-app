@@ -41,10 +41,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      # ---- Generate Tauri icons ----
-      - name: Generate placeholder icon
-        run: node scripts/generate-icon.mjs
-
+      # ---- Generate Tauri icons (from custom icon.png) ----
       - name: Generate Tauri icon set
         run: npx tauri icon src-tauri/icons/icon.png
 
