@@ -199,11 +199,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   // ── Dialog controls ────────────────────────────────────────────────────
 
   openConnectDialog: () => {
-    _pendingEdit = null;
+    (window as any).__opentermo_edit = null;
     set({ connectDialogOpen: true });
   },
   closeConnectDialog: () => {
-    _pendingEdit = null;
+    (window as any).__opentermo_edit = null;
     set({ connectDialogOpen: false });
   },
   dismissHostKey: () => set({ hostKeyPrompt: null }),
@@ -312,17 +312,3 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     ul.set("global-credential", unlistenCredential);
   },
 }));
-
-// ── Module-level helpers for ConnectDialog edit mode ──────────────────
-// Avoids Zustand state complexity that can cause dialog rendering issues.
-
-let _pendingEdit: SessionConfig | null = null;
-
-export function openConnectForEdit(session: SessionConfig) {
-  _pendingEdit = session;
-  useSessionStore.getState().openConnectDialog();
-}
-
-export function readPendingEdit(): SessionConfig | null {
-  return _pendingEdit;
-}
