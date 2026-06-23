@@ -75,7 +75,7 @@ export default function SessionManager() {
     });
 
     return keys.map((k) => ({ name: k, path: k, sessions: map[k] }));
-  }, [sessions, search]);
+    }, [sessions, search, knownGroups]);
   const toggleGroup = (path: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
