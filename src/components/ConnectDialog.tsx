@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { type SessionConfig } from "@/lib/tauriCommands";
-import { consumePendingEdit } from "@/stores/sessionStore";
+import { readPendingEdit } from "@/stores/sessionStore";
 
 interface ConnectDialogProps {
   sessions: SessionConfig[];
@@ -43,7 +43,7 @@ export default function ConnectDialog({
   onSave,
   onDelete,
 }: ConnectDialogProps) {
-  const editSession = consumePendingEdit();
+  const editSession = readPendingEdit();
   const [form, setForm] = useState<SessionConfig>(() =>
     editSession ? { ...editSession } : emptySession()
   );

@@ -198,8 +198,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   // ── Dialog controls ────────────────────────────────────────────────────
 
-  openConnectDialog: () => set({ connectDialogOpen: true }),
-  closeConnectDialog: () => set({ connectDialogOpen: false }),
+  openConnectDialog: () => {
+    _pendingEdit = null;
+    set({ connectDialogOpen: true });
+  },
+  closeConnectDialog: () => {
+    _pendingEdit = null;
+    set({ connectDialogOpen: false });
+  },
   dismissHostKey: () => set({ hostKeyPrompt: null }),
   dismissCredential: () => set({ credentialPrompt: null }),
 
@@ -317,8 +323,6 @@ export function openConnectForEdit(session: SessionConfig) {
   useSessionStore.getState().openConnectDialog();
 }
 
-export function consumePendingEdit(): SessionConfig | null {
-  const s = _pendingEdit;
-  _pendingEdit = null;
-  return s;
+export function readPendingEdit(): SessionConfig | null {
+  return _pendingEdit;
 }
