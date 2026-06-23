@@ -73,8 +73,12 @@ export default function ConnectDialog({
         ? { ...form, password: keyPassphrase }
         : form;
       onSave(session);
-      setForm(emptySession());
-      setKeyPassphrase("");
+      if (isEditing) {
+        onClose();
+      } else {
+        setForm(emptySession());
+        setKeyPassphrase("");
+      }
     } finally {
       setSaving(false);
     }
