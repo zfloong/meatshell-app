@@ -32,6 +32,28 @@ export interface ActiveTab {
   remoteStats: RemoteStats | null;
 }
 
+function pickNextActiveTab(
+  tabs: ActiveTab[],
+  activeTabId: string | null,
+  removedTabId: string,
+): string | null {
+  if (activeTabId !== removedTabId) return activeTabId;
+
+  const removedIndex = tabs.findIndex((tab) => tab.id === removedTabId);
+  const remainingTabs = tabs.filter((tab) => tab.id !== removedTabId);
+  if (remainingTabs.length === 0) return null;
+
+  const fallbackIndex = removedIndex < 0
+    ? remainingTabs.length - 1
+    : Math.min(removedIndex, remainingTabs.length - 1);
+  return remainingTabs[fallbackIndex]?.id ?? null;
+}
+
+function hasTabListeners(unlisteners: Map<string, UnlistenFn>, tabId: string): boolean {
+  return ["output", "connected", "closed", "status", "remotestats"]
+    .some((suffix) => unlisteners.has(`${tabId}-${suffix}`));
+}
+
 
 interface SessionState {
   /** Saved sessions (loaded from config store). */
@@ -50,6 +72,8 @@ interface SessionState {
   credentialPrompt: CredentialPromptPayload | null;
   /** Last connection error message (auto-clears). */
   lastError: string | null;
+  /** Monotonic ID for lastError, used to prevent stale clearTimeout races. */
+  _errorId: number | null;
   /** Incremented to force terminal scroll-to-bottom from command panels. */
   scrollTrigger: Record<string, number>;
   /** File explorer stats for status bar. */
@@ -95,6 +119,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   hostKeyPrompt: null,
   credentialPrompt: null,
   lastError: null,
+  _errorId: null,
   scrollTrigger: {},
   _unlisteners: new Map(),
 
@@ -156,29 +181,38 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         activeTabId: tabId,
       };
     });
-    await get()._setupListener(tabId);
     try {
+      await get()._setupListener(tabId);
       await connectSession(tabId, session);
     } catch (err) {
       const msg = String(err);
-      set({ lastError: msg });
+      set({ lastError: msg, _errorId: Date.now() });
       // Remove the tab that failed to start
-      set((s) => ({
-        tabs: s.tabs.filter((t) => t.id !== tabId),
-        activeTabId: s.activeTabId === tabId ? null : s.activeTabId,
-      }));
+      set((s) => {
+        const tabs = s.tabs.filter((t) => t.id !== tabId);
+        return {
+          tabs,
+          activeTabId: pickNextActiveTab(s.tabs, s.activeTabId, tabId),
+        };
+      });
       await get()._teardownListener(tabId);
-      setTimeout(() => set({ lastError: null }), 6000);
+      const clearAt = Date.now();
+      setTimeout(() => {
+        set((s) => s._errorId === clearAt ? { lastError: null } : {});
+      }, 6000);
     }
   },
 
   async disconnect(tabId) {
     await disconnectSession(tabId);
     await get()._teardownListener(tabId);
-    set((s) => ({
-      tabs: s.tabs.filter((t) => t.id !== tabId),
-      activeTabId: s.activeTabId === tabId ? null : s.activeTabId,
-    }));
+    set((s) => {
+      const tabs = s.tabs.filter((t) => t.id !== tabId);
+      return {
+        tabs,
+        activeTabId: pickNextActiveTab(s.tabs, s.activeTabId, tabId),
+      };
+    });
   },
 
   async sendInput(tabId, data) {
@@ -214,7 +248,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   // ── Event listeners ───────────────────────────────────────────────────
 
   async _setupListener(tabId) {
-    if (get()._unlisteners.has(tabId)) return;
+    if (hasTabListeners(get()._unlisteners, tabId)) return;
 
     const unlistenOutput = await listen<string>(
       `terminal-output:${tabId}`,
@@ -242,13 +276,19 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         const tab = get().tabs.find((t) => t.id === tabId);
         // If tab was still connecting, show error
         if (tab && tab.status === "connecting") {
-          set({ lastError: `连接失败: ${event.payload}` });
-          setTimeout(() => set({ lastError: null }), 6000);
+          const errId = Date.now();
+          set({ lastError: `连接失败: ${event.payload}`, _errorId: errId });
+          setTimeout(() => {
+            set((s) => s._errorId === errId ? { lastError: null } : {});
+          }, 6000);
         }
-        set((s) => ({
-          tabs: s.tabs.filter((t) => t.id !== tabId),
-          activeTabId: s.activeTabId === tabId ? null : s.activeTabId,
-        }));
+        set((s) => {
+          const tabs = s.tabs.filter((t) => t.id !== tabId);
+          return {
+            tabs,
+            activeTabId: pickNextActiveTab(s.tabs, s.activeTabId, tabId),
+          };
+        });
       },
     );
 

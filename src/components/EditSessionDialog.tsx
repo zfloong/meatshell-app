@@ -135,8 +135,8 @@ export default function EditSessionDialog({ session, onClose }: EditSessionDialo
                       }}
                     >
                       <option value="ssh">SSH</option>
-                      <option value="sftp">SFTP</option>
                       <option value="telnet">Telnet</option>
+                      <option value="serial">Serial</option>
                     </select>
                     <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-secondary">
                       <span className="material-symbols-outlined text-[16px]">terminal</span>

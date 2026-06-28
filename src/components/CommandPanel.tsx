@@ -26,7 +26,7 @@ import {
 import { useCommandStore } from "@/stores/commandStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { save } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import type { CommandEntry } from "@/lib/tauriCommands";
 import {
   Dialog,
@@ -727,12 +727,16 @@ export default function CommandPanel() {
             <div className="w-px h-4 bg-[var(--border-subtle)] mx-0.5" />
             <button
               onClick={async () => {
-                const filePath = await save({
-                  filters: [{ name: "JSON", extensions: ["json"] }],
-                  defaultPath: "opentermo-commands.json",
-                });
-                if (filePath) {
-                  await invoke("write_text_file", { path: filePath, content: exportAll() });
+                try {
+                  const filePath = await save({
+                    filters: [{ name: "JSON", extensions: ["json"] }],
+                    defaultPath: "opentermo-commands.json",
+                  });
+                  if (filePath) {
+                    await writeTextFile(filePath, exportAll());
+                  }
+                } catch (err) {
+                  console.error("Export failed:", err);
                 }
               }}
               className="flex items-center gap-1 px-3 py-2 text-sm rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors"

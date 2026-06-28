@@ -1,6 +1,9 @@
 //! Tauri IPC commands exposed to the frontend.
 
 use std::collections::HashMap;
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -241,8 +244,44 @@ fn get_occupied_drives() -> std::collections::HashSet<String> {
     set
 }
 
-/// Create a per-session rclone SFTP config entry.
+fn obscure_rclone_password(rclone_path: &str, password: &str) -> Result<String, String> {
+    let mut child = Command::new(rclone_path);
+    child
+        .creation_flags(0x08000000)
+        .args(["obscure", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    let mut child = child
+        .spawn()
+        .map_err(|e| format!("启动 rclone obscure 失败: {e}"))?;
+
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin
+            .write_all(password.as_bytes())
+            .and_then(|_| stdin.write_all(b"\n"))
+            .map_err(|e| format!("写入 rclone obscure stdin 失败: {e}"))?;
+    }
+
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("等待 rclone obscure 失败: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("rclone obscure 失败: {}", stderr.trim()));
+    }
+
+    let obscured = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if obscured.is_empty() {
+        return Err("rclone obscure 返回了空密码".into());
+    }
+    Ok(obscured)
+}
+
+/// Create a per-session rclone SFTP config file.
 fn create_rclone_config(
+    runtime_dir: &Path,
     rclone_path: &str,
     config_name: &str,
     host: &str,
@@ -250,33 +289,29 @@ fn create_rclone_config(
     user: &str,
     password: Option<&str>,
     key_path: Option<&str>,
-) -> Result<(), String> {
-    let mut cmd = Command::new(rclone_path);
-    cmd.creation_flags(0x08000000);
-    cmd.args(["config", "create", config_name, "sftp"])
-        .arg("host").arg(host)
-        .arg("port").arg(port.to_string())
-        .arg("user").arg(user)
-        .arg("shell_type").arg("unix")
-        .arg("set_modtime").arg("false")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-
-    if let Some(kp) = key_path {
-        let fixed = kp.replace('\\', "/");
-        cmd.arg("key_file").arg(&fixed);
-    }
-
+) -> Result<PathBuf, String> {
+    let mut config = String::new();
+    config.push_str(&format!("[{config_name}]\n"));
+    config.push_str("type = sftp\n");
+    config.push_str(&format!("host = {host}\n"));
+    config.push_str(&format!("port = {port}\n"));
+    config.push_str(&format!("user = {user}\n"));
+    config.push_str("shell_type = unix\n");
+    config.push_str("set_modtime = false\n");
     if let Some(pw) = password {
-        cmd.arg("pass").arg(pw);
+        let obscured = obscure_rclone_password(rclone_path, pw)?;
+        config.push_str(&format!("pass = {obscured}\n"));
+    }
+    if let Some(kp) = key_path {
+        config.push_str(&format!("key_file = {}\n", kp.replace('\\', "/")));
     }
 
-    let output = cmd.output().map_err(|e| format!("运行 rclone 配置失败: {}", e))?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("rclone 配置失败: {}", stderr.trim()));
-    }
-    Ok(())
+    fs::create_dir_all(runtime_dir)
+        .map_err(|e| format!("创建 rclone 配置目录失败: {e}"))?;
+    let config_path = runtime_dir.join(format!("{config_name}.conf"));
+    fs::write(&config_path, config)
+        .map_err(|e| format!("写入 rclone 配置文件失败: {e}"))?;
+    Ok(config_path)
 }
 
 #[tauri::command]
@@ -324,7 +359,8 @@ pub fn rclone_mount(
         None
     };
 
-    create_rclone_config(
+    let config_path = create_rclone_config(
+        mgr.runtime_dir(),
         &mgr.rclone_path,
         &config_name,
         &host,
@@ -337,7 +373,9 @@ pub fn rclone_mount(
     // Spawn rclone mount as background process
     let mut cmd = Command::new(&mgr.rclone_path);
     cmd.creation_flags(0x08000000);
-    cmd.args(["mount", &format!("{}:/", config_name), &drive_letter])
+    cmd.arg("--config")
+        .arg(&config_path)
+        .args(["mount", &format!("{}:/", config_name), &drive_letter])
         .arg("--volname")
         .arg(format!("ms_{}", &host))
         .arg("--no-check-certificate")
@@ -358,9 +396,7 @@ pub fn rclone_mount(
             if let Some(ref mut s) = child.stderr {
                 let _ = s.read_to_string(&mut stderr_str);
             }
-            let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
-                .args(["config", "delete", &config_name])
-                .output();
+            let _ = fs::remove_file(&config_path);
             tracing::warn!(tab_id, host, exit = ?status, stderr = %stderr_str.trim(), "rclone 挂载失败（提前退出）");
             return Err(format!(
                 "[rclone] {} 挂载失败 (exit {})\n{}",
@@ -377,9 +413,7 @@ pub fn rclone_mount(
                 Err(_) => {
                     // Drive not accessible, kill and clean up
                     let _ = child.kill();
-                    let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
-                        .args(["config", "delete", &config_name])
-                        .output();
+                    let _ = fs::remove_file(&config_path);
                     tracing::warn!(tab_id, host, drive = %drive_letter, "rclone 盘符不可访问");
                     return Err(format!(
                         "[rclone] {} 挂载到 {} 但盘符不可访问，请检查密钥和网络",
@@ -389,19 +423,13 @@ pub fn rclone_mount(
             }
         }
         Err(e) => {
-            let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
-                .args(["config", "delete", &config_name])
-                .output();
+            let _ = fs::remove_file(&config_path);
             tracing::error!(tab_id, host, error = %e, "rclone 挂载进程异常");
             return Err(format!("[rclone] 进程异常: {}", e));
         }
     }
 
-    mgr.mounts.lock().insert(tab_id.clone(), MountInfo {
-        drive_letter: drive_letter.clone(),
-        pid,
-        config_name,
-    });
+    mgr.remember_mount(&tab_id, drive_letter.clone(), pid, config_path)?;
 
     Ok(format!("{} -> {}", drive_letter, host))
     })();
@@ -423,15 +451,7 @@ pub fn rclone_unmount(
 
     let drive = mount.drive_letter.clone();
 
-    let _ = Command::new("taskkill").creation_flags(0x08000000)
-        .args(["/F", "/PID", &mount.pid.to_string()])
-        .output();
-
-    std::thread::sleep(std::time::Duration::from_millis(300));
-
-    let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
-        .args(["config", "delete", &mount.config_name])
-        .output();
+    mgr.cleanup_mount(&mount);
 
     tracing::info!(tab_id, drive, "rclone 已卸载");
     Ok(format!("Unmounted {}", drive))
@@ -449,13 +469,6 @@ pub fn rclone_list(
         map.insert("drive".into(), m.drive_letter.clone());
         map
     }).collect()
-}
-
-// -- Utility -----------------------------------------------------------------
-
-#[tauri::command]
-pub fn write_text_file(path: String, content: String) -> Result<(), String> {
-    std::fs::write(&path, &content).map_err(|e| e.to_string())
 }
 
 /// 获取本机 Windows 用户名和计算机名

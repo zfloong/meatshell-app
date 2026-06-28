@@ -40,7 +40,7 @@ export default function App() {
 
   useEffect(() => {
     loadSessions();
-    setupGlobal();
+    setupGlobal().catch((e) => console.error("setupGlobal failed:", e));
   }, [loadSessions, setupGlobal]);
 
   const applyAll = useCallback(() => {

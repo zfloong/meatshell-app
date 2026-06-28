@@ -133,9 +133,17 @@ export const useCommandStore = create<CommandState>((set, get) => ({
       },
     );
 
+    let errors: string[] = [];
     for (const e of toUpdate) {
       const newCat = newPath + e.category.trim().slice(oldPath.length);
-      await saveCommand({ ...e, category: newCat });
+      try {
+        await saveCommand({ ...e, category: newCat });
+      } catch (err) {
+        errors.push(`${e.label || e.command}: ${err}`);
+      }
+    }
+    if (errors.length > 0) {
+      console.warn("renameFolder partial errors:", errors);
     }
 
     const newEntries = s.entries.map((e) => {

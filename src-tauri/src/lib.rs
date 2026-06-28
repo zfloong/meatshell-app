@@ -89,10 +89,6 @@ pub fn run() {
 
     let rclone_path = discover_rclone();
     tracing::info!(rclone_path, "已发现 rclone");
-    // Kill any stale rclone processes from previous runs
-    let _ = std::process::Command::new("taskkill").creation_flags(0x08000000)
-        .args(["/F", "/IM", "rclone.exe"])
-        .output();
 
     // Prevent re-entrant close (the cleanup thread calls window.close()
     // which re-fires CloseRequested; the flag breaks the cycle).
@@ -169,7 +165,6 @@ pub fn run() {
             commands::reply_credential,
             commands::get_system_stats,
             commands::get_local_user_info,
-            commands::write_text_file,
             commands::rclone_mount,
             commands::rclone_unmount,
             commands::rclone_list,

@@ -99,12 +99,15 @@ impl SessionKind {
             SessionKind::Telnet => "telnet",
         }
     }
+}
 
-    pub fn from_str(s: &str) -> Self {
+impl std::str::FromStr for SessionKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "serial" => SessionKind::Serial,
-            "telnet" => SessionKind::Telnet,
-            _ => SessionKind::Ssh,
+            "serial" => Ok(SessionKind::Serial),
+            "telnet" => Ok(SessionKind::Telnet),
+            _ => Ok(SessionKind::Ssh),
         }
     }
 }
@@ -140,11 +143,14 @@ impl AuthMethod {
             AuthMethod::Key => "key",
         }
     }
+}
 
-    pub fn from_str(s: &str) -> Self {
+impl std::str::FromStr for AuthMethod {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "key" => AuthMethod::Key,
-            _ => AuthMethod::Password,
+            "key" => Ok(AuthMethod::Key),
+            _ => Ok(AuthMethod::Password),
         }
     }
 }
@@ -390,7 +396,7 @@ impl ConfigStore {
 
         let mut key = [0u8; 32];
         OsRng.fill_bytes(&mut key);
-        fs::write(&key_path, &key)
+        fs::write(&key_path, key)
             .with_context(|| format!("failed to write {}", key_path.display()))?;
         #[cfg(unix)]
         {

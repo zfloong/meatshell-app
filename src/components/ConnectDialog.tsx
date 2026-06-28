@@ -10,9 +10,9 @@ import { type SessionConfig } from "@/lib/tauriCommands";
 interface ConnectDialogProps {
   sessions: SessionConfig[];
   onClose: () => void;
-  onConnect: (session: SessionConfig) => void;
-  onSave: (session: SessionConfig) => void;
-  onDelete: (id: string) => void;
+  onConnect: (session: SessionConfig) => Promise<void>;
+  onSave: (session: SessionConfig) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
 function emptySession(): SessionConfig {
@@ -46,14 +46,19 @@ export default function ConnectDialog({
 
   const isValid = form.host.trim().length > 0;
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!isValid) return;
+    setSaving(true);
     const session = form.auth === "key"
       ? { ...form, password: keyPassphrase }
       : form;
-    onSave(session);
-    onConnect(session);
-    onClose();
+    try {
+      await onSave(session);
+      await onConnect(session);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -63,7 +68,7 @@ export default function ConnectDialog({
       const session = form.auth === "key"
         ? { ...form, password: keyPassphrase }
         : form;
-      onSave(session);
+      await onSave(session);
       setForm(emptySession());
       setKeyPassphrase("");
     } finally {
@@ -153,8 +158,8 @@ export default function ConnectDialog({
                       }}
                     >
                       <option value="ssh">SSH</option>
-                      <option value="sftp">SFTP</option>
                       <option value="telnet">Telnet</option>
+                      <option value="serial">Serial</option>
                     </select>
                     <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-secondary">
                       <span className="material-symbols-outlined text-[16px]">terminal</span>
@@ -305,7 +310,7 @@ export default function ConnectDialog({
           </button>
           <button
             onClick={handleConnect}
-            disabled={!isValid}
+            disabled={!isValid || saving}
             className="px-6 py-2 rounded-lg bg-secondary text-black font-semibold hover:bg-secondary/90 transition-all text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: "0 0 10px rgba(77, 224, 130, 0.25)" }}
           >
