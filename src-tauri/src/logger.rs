@@ -44,7 +44,7 @@ pub fn init() {
     // Build an EnvFilter: honour RUST_LOG, default "info", silence ICU crates.
     let filter = {
         let mut f = EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new("opentermo=trace,russh=warn"));
+            .unwrap_or_else(|_| EnvFilter::new("opentermo=trace,meatshell=info,russh=warn"));
         for d in ["icu_provider=off", "icu_segmenter=off", "icu_normalizer=off"] {
             if let Ok(dir) = d.parse() {
                 f = f.add_directive(dir);

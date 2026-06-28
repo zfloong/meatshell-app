@@ -31,16 +31,25 @@ export default function SessionManager() {
   const tabs = useSessionStore((s) => s.tabs);
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const setActiveTab = useSessionStore((s) => s.setActiveTab);
+  const lastError = useSessionStore((s) => s.lastError);
+  const clearError = useSessionStore((s) => s.clearError);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set([DEFAULT_GROUP]));
   const [ctx, setCtx] = useState<CtxState | null>(null);
   const [knownGroups, setKnownGroups] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => { loadSessions(); }, [loadSessions]);
 
   const groups = useMemo(() => {
+    const filtered = searchQuery
+      ? sessions.filter((s) =>
+          (s.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.host.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : sessions;
     const map: Record<string, SessionConfig[]> = {};
-    for (const s of sessions) {
+    for (const s of filtered) {
       const g = s.group || DEFAULT_GROUP;
       if (!map[g]) map[g] = [];
       map[g].push(s);
@@ -176,6 +185,31 @@ export default function SessionManager() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* 搜索栏 */}
+      <div className="px-3 mb-2">
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[14px]">search</span>
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-surface-container-lowest border border-outline-variant/20 text-terminal-mono font-terminal-mono text-on-surface rounded py-1 pl-7 pr-2 text-[11px] focus:outline-none focus:border-primary/50 placeholder:text-outline/30"
+            placeholder="搜索会话名称或主机..."
+            type="text"
+          />
+        </div>
+      </div>
+
+      {/* 连接错误提示 */}
+      {lastError && (
+        <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error/10 border border-error/20 text-error text-[11px] font-terminal-mono animate-in slide-in-from-top-1">
+          <span className="material-symbols-outlined text-[14px] flex-shrink-0">error_outline</span>
+          <span className="flex-1 truncate">{lastError}</span>
+          <button onClick={clearError} className="flex-shrink-0 text-error/60 hover:text-error transition-colors">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+      )}
+
       {groups.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-2 text-sm text-on-surface-variant">
           <span className="material-symbols-outlined text-[28px] opacity-25">terminal</span>
@@ -196,7 +230,7 @@ export default function SessionManager() {
                   null,
                   { label: "重命名", icon: <Edit3 size={13} />, onClick: () => handleRenameGroup(group.name) },
                 ])}
-                className="w-full flex items-center gap-2 px-3 py-1 text-left hover:bg-surface-variant/30 transition-colors rounded group/gh mb-0.5"
+                className="w-full flex items-center gap-2 px-3 text-left hover:bg-surface-variant/30 transition-colors rounded group/gh mb-0.5"
               >
                 <span className={`material-symbols-outlined text-[16px] text-outline transition-transform duration-200 group-hover/gh:text-on-surface ${isExpanded ? "" : "-rotate-90"}`}>
                   expand_more
@@ -204,8 +238,11 @@ export default function SessionManager() {
                 <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-outline group-hover/gh:text-on-surface">
                   {group.name}
                 </span>
-                <span className="text-[10px] font-terminal-mono text-outline bg-surface-container px-1.5 py-0.5 rounded tabular-nums">
+                <span className="text-[10px] font-terminal-mono text-outline bg-surface-container px-1.5 rounded tabular-nums">
                   {group.sessions.length}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-outline hover:text-secondary cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); openConnectDialog(); }}>add</span>
                 </span>
               </button>
 
@@ -219,8 +256,6 @@ export default function SessionManager() {
                         isConnected={isConnected(s.id)}
                         isActive={isActive(s.id)}
                         onConnect={() => handleConnect(s)}
-                        onEdit={() => startEdit(s)}
-                        onDelete={() => handleDelete(s.id)}
                         onContextMenu={(e: React.MouseEvent) => showCtx(e, sessionCtx(s))}
                       />
                     </div>
@@ -251,16 +286,12 @@ function SessionItem({
   isConnected,
   isActive,
   onConnect,
-  onEdit,
-  onDelete,
   onContextMenu,
 }: {
   session: SessionConfig;
   isConnected: boolean;
   isActive: boolean;
   onConnect: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
   return (
@@ -301,24 +332,6 @@ function SessionItem({
             {session.host}{session.port !== 22 && session.port !== 23 ? `:${session.port}` : ""}
           </span>
         </div>
-      </div>
-
-      {/* Hover actions */}
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          className="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 transition-colors"
-          title="编辑"
-        >
-          <Edit3 size={11} />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors"
-          title="删除"
-        >
-          <Trash2 size={11} />
-        </button>
       </div>
     </a>
   );

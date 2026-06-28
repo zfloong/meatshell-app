@@ -445,6 +445,7 @@ pub fn spawn_session(
         )
         .await
         {
+            tracing::error!(error = ?err, "SSH 会话异常结束 (完整错误链)");
             tracing::warn!("ssh session ended with error: {err:#}");
             let _ = evt_tx_for_task.send(SessionEvent::Closed(format!("{err:#}")));
         }
@@ -497,6 +498,7 @@ async fn run_session(
         events: events.clone(),
     };
     let addr = format!("{}:{}", session.host, session.port);
+    tracing::info!(addr = %addr, proxy = %session.proxy, "SSH 连接阶段: TCP 连接");
     // Connect directly, or tunnel through a SOCKS5 / HTTP proxy (issue #7).
     let mut handle = match crate::proxy::resolve(&session.proxy) {
         Some(p) => {
@@ -506,16 +508,29 @@ async fn run_session(
                 crate::proxy::describe(&p),
                 addr
             )));
+            tracing::info!(proxy = %crate::proxy::describe(&p), addr = %addr, "SSH 连接阶段: 通过代理连接");
             let stream = crate::proxy::connect(&p, &session.host, session.port)
                 .await
                 .with_context(|| format!("proxy connect to {} failed", addr))?;
-            client::connect_stream(config, stream, handler)
-                .await
-                .with_context(|| format!("connect {} failed", addr))?
+            tracing::info!(addr = %addr, "SSH 连接阶段: 代理 TCP 已连接，开始 SSH 握手");
+            let connect_result = client::connect_stream(config, stream, handler)
+                .await;
+            match &connect_result {
+                Ok(_) => tracing::info!(addr = %addr, "SSH 连接阶段: SSH 握手成功"),
+                Err(e) => tracing::error!(addr = %addr, error = ?e, "SSH 连接阶段: SSH 握手失败"),
+            }
+            connect_result.with_context(|| format!("connect {} failed", addr))?
         }
-        None => client::connect(config, addr.as_str(), handler)
-            .await
-            .with_context(|| format!("connect {} failed", addr))?,
+        None => {
+            tracing::info!(addr = %addr, "SSH 连接阶段: 直连，开始 TCP + SSH 握手");
+            let connect_result = client::connect(config, addr.as_str(), handler)
+                .await;
+            match &connect_result {
+                Ok(_) => tracing::info!(addr = %addr, "SSH 连接阶段: TCP + SSH 握手成功"),
+                Err(e) => tracing::error!(addr = %addr, error = ?e, "SSH 连接阶段: TCP/SSH 连接失败"),
+            }
+            connect_result.with_context(|| format!("connect {} failed", addr))?
+        }
     };
 
     // Resolve missing username/password by prompting the user (#110).
@@ -530,6 +545,7 @@ async fn run_session(
         }
     };
 
+    tracing::info!(user = %user, host = %session.host, auth = ?session.auth, "SSH 连接阶段: 开始认证");
     // --- Auth ----------------------------------------------------------
     let authed = match session.auth {
         AuthMethod::Password => handle
@@ -570,7 +586,7 @@ async fn run_session(
     };
 
     if !authed {
-        tracing::warn!("ssh authentication failed for {}@{}", user, session.host);
+        tracing::warn!(user = %user, host = %session.host, "SSH 连接阶段: 认证被拒绝");
         let _ = events.send(SessionEvent::Closed(t("认证失败", "authentication failed").into()));
         let _ = handle
             .disconnect(Disconnect::ByApplication, "auth failed", "")
@@ -578,12 +594,16 @@ async fn run_session(
         return Ok(());
     }
 
+    tracing::info!(user = %user, host = %session.host, "SSH 连接阶段: 认证成功");
+
     // --- Shell channel --------------------------------------------------
+    tracing::info!(host = %session.host, "SSH 连接阶段: 打开 shell channel");
     let mut channel = handle
         .channel_open_session()
         .await
-        .context("open session channel")?;
+        .with_context(|| format!("open session channel on {} failed", session.host))?;
 
+    tracing::info!(host = %session.host, "SSH 连接阶段: 请求 PTY");
     channel
         .request_pty(
             true,
@@ -1341,6 +1361,39 @@ impl Handler for ClientHandler {
             }
         });
         Ok(())
+    }
+
+    /// Called when the remote server disconnects or a connection error occurs.
+    /// Captures the disconnect reason/message from the server for diagnostics.
+    async fn disconnected(
+        &mut self,
+        reason: russh::client::DisconnectReason<Self::Error>,
+    ) -> Result<(), Self::Error> {
+        match reason {
+            russh::client::DisconnectReason::ReceivedDisconnect(info) => {
+                tracing::error!(
+                    host = %self.host,
+                    port = self.port,
+                    reason_code = ?info.reason_code,
+                    message = %info.message,
+                    "SSH 连接阶段: 服务器主动断开连接"
+                );
+                let _ = self.events.send(SessionEvent::Status(format!(
+                    "服务器断开: {} (code {:?})",
+                    info.message, info.reason_code
+                )));
+                Err(russh::Error::Disconnect)
+            }
+            russh::client::DisconnectReason::Error(e) => {
+                tracing::error!(
+                    host = %self.host,
+                    port = self.port,
+                    error = ?e,
+                    "SSH 连接阶段: 连接错误"
+                );
+                Err(e)
+            }
+        }
     }
 }
 

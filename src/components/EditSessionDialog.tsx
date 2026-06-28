@@ -1,15 +1,11 @@
 import { useState } from "react";
-import { FolderOpen } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { Input } from "@/components/ui/input";
+import { type SessionConfig } from "@/lib/tauriCommands";
+import { useSessionStore } from "@/stores/sessionStore";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { type SessionConfig } from "@/lib/tauriCommands";
-import { useSessionStore } from "@/stores/sessionStore";
 
 interface EditSessionDialogProps {
   session: SessionConfig;
@@ -25,6 +21,7 @@ export default function EditSessionDialog({ session, onClose }: EditSessionDialo
     session.auth === "key" ? session.password || "" : ""
   );
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const isValid = form.host.trim().length > 0;
 
@@ -61,170 +58,242 @@ export default function EditSessionDialog({ session, onClose }: EditSessionDialo
       if (selected) {
         setForm({ ...form, private_key_path: selected as string });
       }
-    } catch { /* dialog plugin may not be available */ }
-  };
-
-  const inputStyle = {
-    background: "var(--surface-container-low)",
-    border: "1px solid var(--outline-variant)",
-    borderRadius: "var(--radius-md)",
+    } catch {}
   };
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-[540px] p-0 overflow-hidden rounded-2xl" style={{
-        background: "rgba(19, 19, 19, 0.85)",
-        backdropFilter: "blur(40px)",
-        WebkitBackdropFilter: "blur(40px)",
-        border: "1px solid rgba(68, 71, 78, 0.30)",
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)",
+      <DialogContent className="max-w-3xl h-auto max-h-[85vh] p-0 overflow-hidden rounded-2xl flex flex-col" style={{
+        background: "var(--surface-container-low)",
+        border: "1px solid var(--outline-variant)",
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
       }}>
         {/* Header */}
-        <DialogHeader className="px-8 py-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
+        <div className="px-5 py-2.5 border-b border-outline-variant/20 flex items-center justify-between shrink-0" style={{ background: "var(--surface-container)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary">
+              <span className="material-symbols-outlined text-[20px]">edit_note</span>
             </div>
             <div>
-              <DialogTitle className="text-headline-lg font-headline-lg text-white font-bold tracking-wide">编辑连接</DialogTitle>
-              <p className="text-label-sm text-[var(--text-secondary)] mt-0.5">{session.name || session.host}</p>
+              <h2 className="text-[15px] font-semibold text-white">编辑连接</h2>
+              <p className="text-[10px] text-on-surface-variant">{session.name || session.host}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/10 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-white hover:bg-white/10 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
-        </DialogHeader>
+        </div>
 
-        <div className="flex flex-col gap-6 p-8">
-          {/* Name + Group */}
-          <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">会话名称</span>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="我的服务器" className="h-9 text-sm" style={inputStyle} />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">分组</span>
-              <Input value={form.group || ""} onChange={(e) => setForm({ ...form, group: e.target.value })} placeholder="终端列表" className="h-9 text-sm" style={inputStyle} />
-            </label>
-          </div>
-
-          {/* Host + Port */}
-          <div className="grid grid-cols-[1fr_100px] gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">主机</span>
-              <Input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="192.168.1.1" className="h-9 text-sm" style={inputStyle} />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">端口</span>
-              <Input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: Number(e.target.value) || 22 })} className="h-9 text-sm" style={inputStyle} />
-            </label>
-          </div>
-
-          {/* User + Auth */}
-          <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">用户名</span>
-              <Input value={form.user} onChange={(e) => setForm({ ...form, user: e.target.value })} placeholder="root" className="h-9 text-sm" style={inputStyle} />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">认证方式</span>
-              <select
-                value={form.auth}
-                onChange={(e) => setForm({ ...form, auth: e.target.value as SessionConfig["auth"] })}
-                className="custom-select h-9 w-full text-sm rounded-md px-2.5 font-terminal-mono"
-                style={{
-                  background: "var(--surface-container-low)",
-                  border: "1px solid var(--outline-variant)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                <option value="password">密码</option>
-                <option value="key">SSH 密钥</option>
-              </select>
-            </label>
-          </div>
-
-          {/* Auth details */}
-          <div className="grid grid-cols-2 gap-4">
-            {form.auth === "password" ? (
-              <>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">密码</span>
-                  <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" className="h-9 text-sm" style={inputStyle} />
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">代理</span>
-                  <Input value={form.proxy} onChange={(e) => setForm({ ...form, proxy: e.target.value })} placeholder="socks5://127.0.0.1:1080" className="h-9 text-sm" style={inputStyle} />
-                </label>
-              </>
-            ) : (
-              <>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">私钥路径</span>
-                  <div className="flex gap-1.5">
-                    <Input value={form.private_key_path} onChange={(e) => setForm({ ...form, private_key_path: e.target.value })} placeholder="~/.ssh/id_ed25519" className="h-9 text-sm flex-1" style={inputStyle} />
-                    <button onClick={handleBrowseKey} className="shrink-0 h-9 w-9 flex items-center justify-center rounded-md border border-[var(--outline-variant)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors">
-                      <FolderOpen size={14} />
-                    </button>
+        {/* Form body */}
+        <div className="px-5 py-4 overflow-y-auto flex-1">
+          <div className="space-y-4">
+            {/* Basic Info */}
+            <section>
+              <h3 className="text-[11px] font-semibold text-secondary uppercase tracking-widest mb-2.5 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[15px]">badge</span> 基本信息
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-[13px] text-on-surface-variant mb-1.5">会话名称</label>
+                  <div className="relative">
+                    <input
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] placeholder-[#8e9098] text-[14px] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all"
+                      placeholder="例如：生产环境数据库、个人博客服务器..."
+                      type="text"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-on-surface-variant/50">
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                    </div>
                   </div>
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-label-sm font-label-sm text-[var(--text-secondary)]">密钥密码</span>
-                  <Input type="password" value={keyPassphrase} onChange={(e) => setKeyPassphrase(e.target.value)} placeholder="(可选)" className="h-9 text-sm" style={inputStyle} />
-                </label>
-              </>
-            )}
-          </div>
+                </div>
+              </div>
+            </section>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 pt-4 border-t border-white/5">
-            <button
-              onClick={handleSaveAndConnect}
-              disabled={!isValid}
-              className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg font-medium text-sm transition-all active:scale-[0.97]"
-              style={{
-                background: isValid ? "var(--secondary)" : "rgba(255,255,255,0.1)",
-                color: isValid ? "#003919" : "var(--text-muted)",
-                fontWeight: 600,
-                boxShadow: isValid ? "0 0 15px rgba(77, 224, 130, 0.3)" : "none",
-                cursor: isValid ? "pointer" : "not-allowed",
-              }}
-            >
-              保存并连接
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!isValid || saving}
-              className="flex-1 h-10 rounded-lg border font-medium text-sm transition-all"
-              style={{
-                borderColor: "rgba(255,255,255,0.10)",
-                background: "rgba(255,255,255,0.05)",
-                color: isValid ? "var(--text-primary)" : "var(--text-muted)",
-                cursor: isValid ? "pointer" : "not-allowed",
-              }}
-            >
-              保存
-            </button>
-            <button
-              onClick={onClose}
-              className="h-10 px-4 rounded-lg border font-medium text-sm transition-all hover:bg-[var(--surface-hover)]"
-              style={{
-                borderColor: "rgba(255,255,255,0.10)",
-                background: "transparent",
-                color: "var(--text-primary)",
-              }}
-            >
-              取消
-            </button>
+            {/* Network Config */}
+            <section>
+              <h3 className="text-[11px] font-semibold text-secondary uppercase tracking-widest mb-2.5 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[15px]">language</span> 网络配置
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 bg-white/[0.02] p-3.5 rounded-xl border border-white/5">
+                <div className="md:col-span-3">
+                  <label className="block text-[12px] text-on-surface-variant mb-1.5">协议</label>
+                  <div className="relative">
+                    <select
+                      value={form.kind}
+                      onChange={(e) => setForm({ ...form, kind: e.target.value as SessionConfig["kind"], port: e.target.value === "ssh" ? 22 : e.target.value === "telnet" ? 23 : 0 })}
+                      className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono pl-9 appearance-none focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                      style={{
+                        backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238e9098' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                        backgroundPosition: "right 0.5rem center",
+                        backgroundRepeat: "no-repeat",
+                        backgroundSize: "1.25em 1.25em",
+                      }}
+                    >
+                      <option value="ssh">SSH</option>
+                      <option value="sftp">SFTP</option>
+                      <option value="telnet">Telnet</option>
+                    </select>
+                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-secondary">
+                      <span className="material-symbols-outlined text-[16px]">terminal</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="md:col-span-6">
+                  <label className="block text-[12px] text-on-surface-variant mb-1.5">主机 / IP 地址</label>
+                  <input
+                    value={form.host}
+                    onChange={(e) => setForm({ ...form, host: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-secondary text-terminal-mono font-terminal-mono placeholder-[#8e9098] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                    placeholder="192.168.1.1"
+                    type="text"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-[12px] text-on-surface-variant mb-1.5">端口</label>
+                  <input
+                    type="number"
+                    value={form.port}
+                    onChange={(e) => setForm({ ...form, port: Number(e.target.value) || 22 })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono text-center focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Auth */}
+            <section>
+              <h3 className="text-[11px] font-semibold text-secondary uppercase tracking-widest mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[15px]">key</span> 身份验证
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.02]">
+                <div>
+                  <label className="block text-[13px] text-on-surface-variant mb-1.5">用户名</label>
+                  <div className="relative">
+                    <input
+                      value={form.user}
+                      onChange={(e) => setForm({ ...form, user: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono placeholder-[#8e9098] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                      placeholder="root"
+                      type="text"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-on-surface-variant/50">
+                      <span className="material-symbols-outlined text-[16px]">person</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[13px] text-on-surface-variant mb-1.5">认证方式</label>
+                  <select
+                    value={form.auth}
+                    onChange={(e) => setForm({ ...form, auth: e.target.value as SessionConfig["auth"] })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-[13px] appearance-none focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all"
+                    style={{
+                      backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238e9098' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                      backgroundPosition: "right 0.5rem center",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "1.25em 1.25em",
+                    }}
+                  >
+                    <option value="password">密码</option>
+                    <option value="key">SSH 密钥</option>
+                  </select>
+                </div>
+
+                {form.auth === "password" ? (
+                  <div className="md:col-span-2">
+                    <label className="block text-[13px] text-on-surface-variant mb-1.5">密码</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono placeholder-[#8e9098] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-white transition-colors"
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{showPassword ? "visibility_off" : "visibility"}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-[13px] text-on-surface-variant mb-1.5">私钥路径</label>
+                      <div className="relative">
+                        <input
+                          value={form.private_key_path}
+                          onChange={(e) => setForm({ ...form, private_key_path: e.target.value })}
+                          className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono placeholder-[#8e9098] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px] pr-12"
+                          placeholder="~/.ssh/id_ed25519"
+                          type="text"
+                        />
+                        <button
+                          onClick={handleBrowseKey}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-white transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">folder_open</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[13px] text-on-surface-variant mb-1.5">密钥密码</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={keyPassphrase}
+                          onChange={(e) => setKeyPassphrase(e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl bg-[#1c1b1b] border border-[#44474e] text-[#e5e2e1] text-terminal-mono font-terminal-mono placeholder-[#8e9098] focus:outline-none focus:border-[#4de082] focus:shadow-[0_0_0_2px_rgba(77,224,130,0.15)] focus:bg-[#201f1f] transition-all text-[13px]"
+                          placeholder="(可选)"
+                        />
+                        <button
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-white transition-colors"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">{showPassword ? "visibility_off" : "visibility"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-outline-variant/20 flex justify-end gap-2.5 items-center shrink-0" style={{ background: "var(--surface-container)" }}>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-lg text-on-surface-variant hover:text-white transition-colors text-[13px] font-medium"
+          >
+            取消
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!isValid || saving}
+            className="px-5 py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors text-[13px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            仅保存
+          </button>
+          <button
+            onClick={handleSaveAndConnect}
+            disabled={!isValid}
+            className="px-6 py-2 rounded-lg bg-secondary text-black font-semibold hover:bg-secondary/90 transition-all text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: "0 0 10px rgba(77, 224, 130, 0.25)" }}
+          >
+            <span className="material-symbols-outlined text-[16px]">bolt</span>
+            保存并连接
+          </button>
         </div>
       </DialogContent>
     </Dialog>
