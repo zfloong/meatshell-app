@@ -37,6 +37,7 @@ export default function SessionManager({ searchQuery = "" }: { searchQuery?: str
   const [ctx, setCtx] = useState<CtxState | null>(null);
   const [knownGroups, setKnownGroups] = useState<Set<string>>(new Set());
   const [latency, setLatency] = useState<Record<string, number>>({});
+  const [countries, setCountries] = useState<Record<string, string>>({});
 
   useEffect(() => { loadSessions(); }, [loadSessions]);
 
@@ -73,6 +74,26 @@ export default function SessionManager({ searchQuery = "" }: { searchQuery?: str
     runPing();
     const timer = setInterval(runPing, 30000);
     return () => { abort.abort(); clearInterval(timer); };
+  }, [sessions]);
+
+  // Fetch country for each unique host (once)
+  useEffect(() => {
+    const uniqueHosts = [...new Set(sessions.map((s) => s.host))].filter((h) => !countries[h]);
+    if (uniqueHosts.length === 0) return;
+    const abort = new AbortController();
+    (async () => {
+      for (const host of uniqueHosts) {
+        if (abort.signal.aborted) return;
+        try {
+          const res = await fetch(`http://ip-api.com/json/${host}?fields=countryCode,country`, { signal: abort.signal });
+          const data = await res.json();
+          if (data.countryCode) {
+            setCountries((prev) => ({ ...prev, [host]: data.countryCode }));
+          }
+        } catch {}
+      }
+    })();
+    return () => abort.abort();
   }, [sessions]);
 
   const groups = useMemo(() => {
@@ -204,6 +225,7 @@ export default function SessionManager({ searchQuery = "" }: { searchQuery?: str
                     onConnect={() => handleConnect(s)}
                     onContextMenu={(e: React.MouseEvent) => showCtx(e, sessionCtx(s))}
                     latency={latency[s.id]}
+                    country={countries[s.host]}
                   />
                 </div>
               ))}
@@ -244,6 +266,7 @@ export default function SessionManager({ searchQuery = "" }: { searchQuery?: str
                           onConnect={() => handleConnect(s)}
                           onContextMenu={(e: React.MouseEvent) => showCtx(e, sessionCtx(s))}
                           latency={latency[s.id]}
+                        country={countries[s.host]}
                         />
                       </div>
                     ))}
@@ -267,6 +290,21 @@ export default function SessionManager({ searchQuery = "" }: { searchQuery?: str
   );
 }
 
+/* ── ISO country code → Chinese name ── */
+const COUNTRY_NAMES: Record<string, string> = {
+  CN: "中国", US: "美国", JP: "日本", KR: "韩国", TW: "台湾", HK: "香港",
+  SG: "新加坡", DE: "德国", FR: "法国", GB: "英国", CA: "加拿大", AU: "澳大利亚",
+  IN: "印度", RU: "俄罗斯", BR: "巴西", NL: "荷兰", SE: "瑞典", FI: "芬兰",
+  IT: "意大利", ES: "西班牙", CH: "瑞士", NO: "挪威", DK: "丹麦", BE: "比利时",
+  AT: "奥地利", IE: "爱尔兰", NZ: "新西兰", IL: "以色列", ZA: "南非", AE: "阿联酋",
+  MY: "马来西亚", TH: "泰国", ID: "印尼", PH: "菲律宾", VN: "越南", PL: "波兰",
+  CZ: "捷克", SK: "斯洛伐克", HU: "匈牙利", RO: "罗马尼亚", UA: "乌克兰", TR: "土耳其",
+  GR: "希腊", PT: "葡萄牙", AR: "阿根廷", CL: "智利", MX: "墨西哥", EG: "埃及",
+};
+function countryName(code: string): string {
+  return COUNTRY_NAMES[code] || code;
+}
+
 /* ── Session Item ── */
 function SessionItem({
   session,
@@ -275,6 +313,7 @@ function SessionItem({
   onConnect,
   onContextMenu,
   latency,
+  country,
 }: {
   session: SessionConfig;
   isConnected: boolean;
@@ -282,6 +321,7 @@ function SessionItem({
   onConnect: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
   latency?: number;
+  country?: string;
 }) {
   // Format latency for display (backend returns microseconds, convert to ms)
   const latencyMs = latency === undefined ? undefined
@@ -315,17 +355,21 @@ function SessionItem({
         isActive ? "bg-secondary shadow-[0_0_6px_#4de082]" : isConnected ? "bg-secondary/60" : "opacity-0 group-hover:opacity-40 bg-outline"
       }`} />
 
-      {/* Status icon */}
-      <div className={`flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 transition-all ${
+      {/* Status icon — shows Chinese country name when available */}
+      <div className={`flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 transition-all text-[9px] font-bold leading-none ${
         isActive
           ? "bg-secondary/20 text-secondary"
           : isConnected
             ? "bg-secondary/10 text-secondary"
             : "bg-surface-variant/25 text-outline/60 group-hover:text-secondary group-hover:bg-secondary/8"
       }`}>
-        <span className="material-symbols-outlined text-[16px]">
-          {isActive ? "terminal" : isConnected ? "cloud_done" : "dns"}
-        </span>
+        {country ? (
+          countryName(country)
+        ) : (
+          <span className="material-symbols-outlined text-[16px]">
+            {isActive ? "terminal" : isConnected ? "cloud_done" : "dns"}
+          </span>
+        )}
       </div>
 
       {/* Name + Host */}
