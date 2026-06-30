@@ -261,6 +261,16 @@ pub struct QuickCommand {
     pub command: String,
 }
 
+/// A cluster groups multiple session IDs for batch operations.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cluster {
+    pub id: String,
+    pub name: String,
+    /// Session IDs belonging to this cluster.
+    #[serde(default)]
+    pub session_ids: Vec<String>,
+}
+
 /// On-disk layout. Keep additive to ease forward-compat.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ConfigFile {
@@ -314,6 +324,9 @@ pub struct ConfigFile {
     /// sessions (same path, falling back to each panel's current dir).
     #[serde(default)]
     pub sync_upload: bool,
+    /// Saved clusters for batch operations.
+    #[serde(default)]
+    pub clusters: Vec<Cluster>,
 }
 
 pub struct ConfigStore {
@@ -516,6 +529,28 @@ impl ConfigStore {
 
     pub fn set_font_size(&mut self, size: u32) {
         self.cache.font_size = size.clamp(8, 32);
+    }
+
+    // ── Cluster CRUD ──────────────────────────────────────────────
+
+    pub fn clusters(&self) -> &[Cluster] {
+        &self.cache.clusters
+    }
+
+    pub fn clusters_mut(&mut self) -> &mut Vec<Cluster> {
+        &mut self.cache.clusters
+    }
+
+    pub fn upsert_cluster(&mut self, cluster: Cluster) {
+        if let Some(existing) = self.cache.clusters.iter_mut().find(|c| c.id == cluster.id) {
+            *existing = cluster;
+        } else {
+            self.cache.clusters.push(cluster);
+        }
+    }
+
+    pub fn remove_cluster(&mut self, id: &str) {
+        self.cache.clusters.retain(|c| c.id != id);
     }
 
     pub fn save(&self) -> Result<()> {

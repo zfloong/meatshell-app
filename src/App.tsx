@@ -4,6 +4,7 @@ import { applyOverride } from "@/lib/themeUtils";
 import TitleBar from "@/components/layout/TitleBar";
 import Sidebar from "@/components/layout/Sidebar";
 import TerminalView from "@/components/layout/TerminalView";
+import ClusterPanel from "@/components/ClusterPanel";
 import StatusBar from "@/components/layout/StatusBar";
 import ConnectDialog from "@/components/ConnectDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
@@ -35,6 +36,7 @@ export default function App() {
   const theme = useSettingsStore((s) => s.theme);
   const overrides = useSettingsStore((s) => s.overrides);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState<"terminal" | "cluster">("terminal");
 
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const setActiveTab = useSessionStore((s) => s.setActiveTab);
@@ -82,11 +84,16 @@ export default function App() {
   return (
     <div className="flex flex-col h-full w-full bg-background">
       <ErrorToast />
-      <TitleBar onConnect={openConnect} onSettings={() => setSettingsOpen(true)} />
+      <TitleBar onConnect={openConnect} onSettings={() => setSettingsOpen(true)} view={view} onViewChange={setView} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
+        {view === "cluster" ? (
+          <div className="flex-1 overflow-hidden relative bg-[#090909]">
+            <ClusterPanel onViewChange={setView} />
+          </div>
+        ) : (
         <div id="terminal-area" className="flex-1 overflow-hidden relative bg-[#090909]">
           {/* Tab bar */}
           {tabs.length > 0 && (
@@ -151,6 +158,7 @@ export default function App() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       <StatusBar />

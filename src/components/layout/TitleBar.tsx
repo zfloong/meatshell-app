@@ -7,9 +7,11 @@ import { rclone_mount, rclone_unmount, rclone_list } from "@/lib/tauriCommands";
 interface TitleBarProps {
   onConnect: () => void;
   onSettings: () => void;
+  view: "terminal" | "cluster";
+  onViewChange: (v: "terminal" | "cluster") => void;
 }
 
-export default function TitleBar({ onConnect, onSettings }: TitleBarProps) {
+export default function TitleBar({ onConnect, onSettings, view, onViewChange }: TitleBarProps) {
   const tabs = useSessionStore((s) => s.tabs);
   const activeTabId = useSessionStore((s) => s.activeTabId);
   const setActiveTab = useSessionStore((s) => s.setActiveTab);
@@ -76,8 +78,8 @@ export default function TitleBar({ onConnect, onSettings }: TitleBarProps) {
       <div className="w-6" />
 
       <nav className="hidden md:flex h-full items-center gap-0">
-        <a className="h-full flex items-center px-2.5 text-[11px] text-secondary border-b-2 border-secondary hover:bg-surface-variant/30 transition-colors tracking-wide" href="#">会话</a>
-        <a className="h-full flex items-center px-2.5 text-[11px] text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 transition-colors tracking-wide" href="#">集群</a>
+        <button onClick={() => onViewChange("terminal")} className={`h-full flex items-center px-2.5 text-[11px] transition-colors tracking-wide ${view === "terminal" ? "text-secondary border-b-2 border-secondary" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30"}`}>会话</button>
+        <button onClick={() => onViewChange("cluster")} className={`h-full flex items-center px-2.5 text-[11px] transition-colors tracking-wide ${view === "cluster" ? "text-secondary border-b-2 border-secondary" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30"}`}>集群</button>
         <a className="h-full flex items-center px-2.5 text-[11px] text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 transition-colors tracking-wide" href="#">保险箱</a>
         <a className="h-full flex items-center px-2.5 text-[11px] text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 transition-colors tracking-wide" href="#">脚本</a>
       </nav>

@@ -174,3 +174,48 @@ export async function rclone_unmount(tabId: string): Promise<string> {
   return invoke<string>("rclone_unmount", { tabId });
 }
 
+// ── Cluster types & commands ──────────────────────────────────────
+
+export interface Cluster {
+  id: string;
+  name: string;
+  session_ids: string[];
+}
+
+export async function listClusters(): Promise<Cluster[]> {
+  return invoke<Cluster[]>("list_clusters");
+}
+
+export async function saveCluster(cluster: Cluster): Promise<void> {
+  return invoke("save_cluster", { cluster });
+}
+
+export async function deleteCluster(id: string): Promise<void> {
+  return invoke("delete_cluster", { id });
+}
+
+export async function clusterBatchCommand(tabIds: string[], command: string): Promise<string[]> {
+  return invoke<string[]>("cluster_batch_command", { tabIds, command });
+}
+
+export async function clusterStatus(sessionIds: string[]): Promise<{ statuses: { session_id: string; connected: boolean }[] }> {
+  return invoke("cluster_status", { sessionIds });
+}
+
+export async function clusterUpload(
+  localPath: string,
+  targets: [string, number, string, string, string][]
+): Promise<string[]> {
+  return invoke<string[]>("cluster_upload", { localPath, targets });
+}
+
+export async function clusterDownload(
+  targets: [string, number, string, string, string, string][]
+): Promise<string[]> {
+  return invoke<string[]>("cluster_download", { targets });
+}
+
+export async function clusterExec(tabIds: string[], command: string, stdin?: string): Promise<string[]> {
+  return invoke<string[]>("cluster_exec", { tabIds, command, stdin });
+}
+

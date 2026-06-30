@@ -16,6 +16,7 @@ use tauri::State;
 
 use crate::prompts::PromptManager;
 use crate::session::{MountInfo, SessionManager};
+use meatshell::ssh::ClientHandler;
 
 /// Log a command invocation with its result.
 macro_rules! log_command {
@@ -469,6 +470,234 @@ pub fn rclone_list(
         map.insert("drive".into(), m.drive_letter.clone());
         map
     }).collect()
+}
+
+// ── Cluster commands ─────────────────────────────────────────────
+
+#[tauri::command]
+pub fn list_clusters() -> Result<Vec<meatshell::config::Cluster>, String> {
+    let store = ConfigStore::load().map_err(|e| e.to_string())?;
+    Ok(store.clusters().to_vec())
+}
+
+#[tauri::command]
+pub fn save_cluster(cluster: meatshell::config::Cluster) -> Result<(), String> {
+    let mut store = ConfigStore::load().map_err(|e| e.to_string())?;
+    store.upsert_cluster(cluster);
+    store.save().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_cluster(id: String) -> Result<(), String> {
+    let mut store = ConfigStore::load().map_err(|e| e.to_string())?;
+    store.remove_cluster(&id);
+    store.save().map_err(|e| e.to_string())
+}
+
+/// Send a command to all sessions in a cluster.
+#[tauri::command]
+pub fn cluster_batch_command(
+    mgr: State<'_, SessionManager>,
+    tab_ids: Vec<String>,
+    command: String,
+) -> Result<Vec<String>, String> {
+    let mut results = Vec::new();
+    for tab_id in &tab_ids {
+        match mgr.send_input(tab_id, command.as_bytes().to_vec()) {
+            Ok(_) => results.push(format!("{tab_id}: 已发送")),
+            Err(e) => results.push(format!("{tab_id}: {e}")),
+        }
+    }
+    Ok(results)
+}
+
+/// Get the current status of sessions in a cluster (connected/disconnected + latency).
+#[tauri::command]
+pub fn cluster_status(
+    mgr: State<'_, SessionManager>,
+    session_ids: Vec<String>,
+) -> Result<serde_json::Value, String> {
+    let sessions = mgr.sessions.lock();
+    let statuses: Vec<serde_json::Value> = session_ids.iter().map(|id| {
+        let connected = sessions.contains_key(id);
+        serde_json::json!({ "session_id": id, "connected": connected })
+    }).collect();
+    Ok(serde_json::json!({ "statuses": statuses }))
+}
+
+// ── Cluster file transfer ────────────────────────────────────────
+
+/// Execute a command on a connected SSH session via exec channel and return stdout.
+async fn exec_on_session(
+    handle: &russh::client::Handle<ClientHandler>,
+    command: &str,
+    stdin_data: &str,
+) -> Result<String, String> {
+    use russh::ChannelMsg;
+    let mut channel = handle
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("打开 channel 失败: {e}"))?;
+    // Request a PTY so interactive scripts (like sb menu) work properly
+    let _ = channel
+        .request_pty(true, "xterm-256color", 80, 24, 0, 0, &[])
+        .await;
+    // Use bash with .bashrc sourcing for aliases/functions like sb
+    let escaped = command.replace('\'', "'\\''");
+    let wrapped = format!("bash -c 'source ~/.bashrc 2>/dev/null; {}'", escaped);
+    channel
+        .exec(true, wrapped.as_bytes())
+        .await
+        .map_err(|e| format!("exec 失败: {e}"))?;
+
+    // Send stdin data (for interactive commands like `sb` → send menu selection)
+    if !stdin_data.is_empty() {
+        let _ = channel.data(stdin_data.as_bytes()).await;
+        let _ = channel.eof().await;
+    }
+
+    let mut output = String::new();
+    let mut stderr_buf = String::new();
+    use tokio::time::{timeout, Duration};
+    loop {
+        let timed = timeout(Duration::from_secs(5), channel.wait()).await;
+        match timed {
+            Ok(Some(ChannelMsg::Data { data })) => {
+                let chunk = String::from_utf8_lossy(&data);
+                output.push_str(&chunk);
+            }
+            Ok(Some(ChannelMsg::ExtendedData { data, ext: 1 })) => {
+                stderr_buf.push_str(&String::from_utf8_lossy(&data));
+            }
+            Ok(Some(ChannelMsg::Close)) | Ok(None) => break,
+            Ok(_) => {}
+            Err(_) => {
+                // Timeout: close the channel and return what we have
+                let _ = channel.eof().await;
+                let _ = channel.close().await;
+                break;
+            }
+        }
+    }
+    // If stdout is empty, return stderr instead (some tools output to stderr)
+    let result = if output.trim().is_empty() && !stderr_buf.trim().is_empty() {
+        stderr_buf
+    } else {
+        output
+    };
+    let trimmed = result.trim();
+    if !trimmed.is_empty() && trimmed.len() < 2000 {
+        tracing::debug!(command = %command, output = %trimmed, "exec 命令输出");
+    }
+    Ok(result)
+}
+
+/// Execute a command on multiple connected sessions and return clean stdout.
+#[tauri::command]
+pub async fn cluster_exec(
+    mgr: State<'_, SessionManager>,
+    tab_ids: Vec<String>,
+    command: String,
+    stdin: Option<String>,
+) -> Result<Vec<String>, String> {
+    let stdin_data = stdin.unwrap_or_default();
+    tracing::info!(tab_count = tab_ids.len(), command = %command, has_stdin = !stdin_data.is_empty(), "集群批量执行命令");
+    
+    // Collect handles first, drop the lock, then exec
+    let handles: Vec<(String, Option<(String, Arc<russh::client::Handle<ClientHandler>>)>)> = {
+        let sessions = mgr.sessions.lock();
+        let configs = mgr.session_configs.lock();
+        tab_ids.iter().map(|tid| {
+            let host = configs.get(tid).map(|c| format!("{}@{}", c.user, c.host)).unwrap_or_default();
+            let h = sessions.get(tid).and_then(|sh| {
+                sh.ssh_handle.lock().ok().and_then(|guard| (*guard).clone())
+            });
+            let info = h.map(|handle| (host, handle));
+            (tid.clone(), info)
+        }).collect()
+    };
+    let mut results = Vec::new();
+    for (tid, info) in handles {
+        match info {
+            Some((host, h)) => match exec_on_session(&h, &command, &stdin_data).await {
+                Ok(out) => {
+                    tracing::info!(tab_id = %tid, host = %host, output_len = out.len(), "集群命令执行成功");
+                    results.push(out)
+                }
+                Err(e) => {
+                    tracing::warn!(tab_id = %tid, host = %host, error = %e, "集群命令执行失败");
+                    results.push(format!("[错误] {e}"))
+                }
+            },
+            None => {
+                tracing::warn!(tab_id = %tid, "集群命令跳过：会话未连接");
+                results.push(format!("[{tid}] 会话未连接或 SSH handle 不可用"))
+            }
+        }
+    }
+    tracing::info!(ok = results.iter().filter(|r| !r.starts_with("[错误]")).count(), err = results.iter().filter(|r| r.starts_with("[错误]")).count(), "集群批量命令完成");
+    Ok(results)
+}
+
+/// Upload a local file to multiple servers via SCP.
+/// `targets` is a list of `(host, port, user, private_key_path, remote_path)`.
+#[tauri::command]
+pub fn cluster_upload(
+    local_path: String,
+    targets: Vec<(String, u16, String, String, String)>,
+) -> Result<Vec<String>, String> {
+    tracing::info!(local_path, target_count = targets.len(), "集群上传文件");
+    let mut results = Vec::new();
+    for (host, port, user, key_path, remote_path) in &targets {
+        let mut cmd = std::process::Command::new("scp");
+        cmd.arg("-P").arg(port.to_string())
+            .arg("-o").arg("StrictHostKeyChecking=no")
+            .arg("-o").arg("ConnectTimeout=10");
+        if !key_path.is_empty() {
+            cmd.arg("-i").arg(key_path);
+        }
+        cmd.arg(&local_path)
+            .arg(format!("{}@{}:{}", user, host, remote_path));
+
+        let output = cmd.output().map_err(|e| format!("scp 启动失败: {e}"))?;
+        if output.status.success() {
+            results.push(format!("{host}: ✓ 上传成功"));
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            results.push(format!("{host}: ✗ {stderr}"));
+        }
+    }
+    Ok(results)
+}
+
+/// Download a remote file from multiple servers via SCP.
+/// `targets` is a list of `(host, port, user, private_key_path, remote_path, local_path)`.
+#[tauri::command]
+pub fn cluster_download(
+    targets: Vec<(String, u16, String, String, String, String)>,
+) -> Result<Vec<String>, String> {
+    tracing::info!(target_count = targets.len(), "集群下载文件");
+    let mut results = Vec::new();
+    for (host, port, user, key_path, remote_path, local_path) in &targets {
+        let mut cmd = std::process::Command::new("scp");
+        cmd.arg("-P").arg(port.to_string())
+            .arg("-o").arg("StrictHostKeyChecking=no")
+            .arg("-o").arg("ConnectTimeout=10");
+        if !key_path.is_empty() {
+            cmd.arg("-i").arg(key_path);
+        }
+        cmd.arg(format!("{}@{}:{}", user, host, remote_path))
+            .arg(&local_path);
+
+        let output = cmd.output().map_err(|e| format!("scp 启动失败: {e}"))?;
+        if output.status.success() {
+            results.push(format!("{host}: ✓ 下载成功 → {local_path}"));
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            results.push(format!("{host}: ✗ {stderr}"));
+        }
+    }
+    Ok(results)
 }
 
 /// 获取本机 Windows 用户名和计算机名

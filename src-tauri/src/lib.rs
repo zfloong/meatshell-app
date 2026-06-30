@@ -170,6 +170,14 @@ pub fn run() {
             commands::rclone_list,
             commands::read_logs,
             commands::ping_host,
+            commands::list_clusters,
+            commands::save_cluster,
+            commands::delete_cluster,
+            commands::cluster_batch_command,
+            commands::cluster_status,
+            commands::cluster_upload,
+            commands::cluster_download,
+            commands::cluster_exec,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
