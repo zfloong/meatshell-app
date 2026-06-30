@@ -344,6 +344,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
                       "对话框标题/按钮 text-white 修复",
                       "标签页视觉优化：选中标签绿色底色、未选中标签灰色背景",
                       "标题栏双击缩放修复：所有按钮不再触发窗口缩放",
+                      "修复 ping 主机时弹出 C:\\Windows\\system32\\ping.exe 控制台窗口",
                     ] },
                     { ver: "v1.1.1", date: "2026-06-30", items: [
                       "定时主题切换：设置面板同时显示浅色/深色时段，精确 setTimeout 零轮询",
