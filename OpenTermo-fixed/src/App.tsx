@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { applyOverride } from "@/lib/themeUtils";
 import TitleBar from "@/components/layout/TitleBar";
@@ -45,23 +45,11 @@ export default function App() {
     setupGlobal();
   }, [loadSessions, setupGlobal]);
 
-  // Apply theme + overrides to CSS
+  // Apply theme + overrides — JS is always the single source of truth
   const applyAll = useCallback(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    const saved = overrides[theme];
-    if (saved) {
-      applyOverride(theme, saved);
-    } else {
-      // Clear JS overrides so static CSS takes full control
-      const KEYS = [
-        "--accent","--accent-rgb","--accent-soft","--accent-soft-rgb","--accent-dim","--accent-border","--color-info",
-        "--bg-glass","--glass-blur",
-        "--border-subtle","--border-default","--border-strong",
-        "--scrollbar-thumb","--scrollbar-thumb-hover",
-      ];
-      for (const k of KEYS) document.documentElement.style.removeProperty(k);
-    }
-  }, [theme, overrides]);
+    applyOverride(theme, getEffectiveOverride(theme));
+  }, [theme, getEffectiveOverride]);
 
   useEffect(() => { applyAll(); }, [applyAll]);
 
@@ -129,3 +117,5 @@ export default function App() {
     </div>
   );
 }
+
+

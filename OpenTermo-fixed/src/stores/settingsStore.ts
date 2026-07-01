@@ -6,12 +6,14 @@ export interface ThemeOverride {
   accentHue: number;
   glassAlpha: number;
   borderAlpha: number;
+  panelHue: number;
+  panelSat: number;
 }
 
 const DEFAULT_OVERRIDES: Record<ThemeId, ThemeOverride> = {
-  "deep-blue": { accentHue: 210, glassAlpha: 0.88, borderAlpha: 0.13 },
-  "light":     { accentHue: 217, glassAlpha: 0.82, borderAlpha: 0.14 },
-  "tabby":     { accentHue: 255, glassAlpha: 0.82, borderAlpha: 0.13 },
+  "deep-blue": { accentHue: 210, glassAlpha: 0.88, borderAlpha: 0.13, panelHue: -1, panelSat: 40 },
+  "light":     { accentHue: 217, glassAlpha: 0.82, borderAlpha: 0.14, panelHue: -1, panelSat: 40 },
+  "tabby":     { accentHue: 255, glassAlpha: 0.82, borderAlpha: 0.13, panelHue: -1, panelSat: 40 },
 };
 
 interface SettingsState {
@@ -46,7 +48,7 @@ function loadAllOverrides(): Partial<Record<ThemeId, ThemeOverride>> {
   const result: Partial<Record<ThemeId, ThemeOverride>> = {};
   for (const tid of ["deep-blue", "light", "tabby"] as ThemeId[]) {
     const o = loadOverrideKey(`opentermo-override-${tid}`);
-    if (o) result[tid] = o;
+    if (o) { result[tid] = { accentHue: o.accentHue ?? 210, glassAlpha: o.glassAlpha ?? 0.88, borderAlpha: o.borderAlpha ?? 0.13, panelHue: o.panelHue ?? -1, panelSat: o.panelSat ?? 40 }; }
   }
   return result;
 }

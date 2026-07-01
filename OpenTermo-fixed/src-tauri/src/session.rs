@@ -34,19 +34,16 @@ pub struct SessionManager {
     pub session_configs: Arc<Mutex<HashMap<String, SessionConfig>>>,
     /// Active rclone mounts: tab_id -> MountInfo
     pub mounts: Arc<Mutex<HashMap<String, MountInfo>>>,
-    /// Path to rclone.exe (discovered at startup)
-    pub rclone_path: String,
 }
 
 impl SessionManager {
-    pub fn new(rclone_path: String) -> Self {
+    pub fn new() -> Self {
         Self {
             runtime: tokio::runtime::Runtime::new()
                 .expect("failed to create tokio runtime"),
             sessions: Arc::new(Mutex::new(HashMap::new())),
             session_configs: Arc::new(Mutex::new(HashMap::new())),
             mounts: Arc::new(Mutex::new(HashMap::new())),
-            rclone_path,
         }
     }
 
@@ -145,7 +142,7 @@ impl SessionManager {
             // Brief wait for WinFsp to release
             std::thread::sleep(std::time::Duration::from_millis(500));
             // Clean up rclone config entry
-            let _ = Command::new(&self.rclone_path).creation_flags(0x08000000)
+            let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
                 .args(["config", "delete", &mount.config_name])
                 .output();
         }
@@ -165,7 +162,7 @@ impl SessionManager {
             let _ = Command::new("taskkill").creation_flags(0x08000000)
                 .args(["/F", "/PID", &mount.pid.to_string()])
                 .output();
-            let _ = Command::new(&self.rclone_path).creation_flags(0x08000000)
+            let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
                 .args(["config", "delete", &mount.config_name])
                 .output();
         }

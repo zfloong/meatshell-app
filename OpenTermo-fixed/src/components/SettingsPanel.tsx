@@ -15,15 +15,15 @@ interface Props {
 }
 
 const THEME_META: { id: ThemeId; label: string; desc: string; colors: string[] }[] = [
-  { id: "deep-blue", label: "暗色", desc: "纯黑白灰层次", colors: ["#000000", "#8b9dc3", "#1a1a1a"] },
+  { id: "deep-blue", label: "默认", desc: "纯黑白灰层次", colors: ["#000000", "#8b9dc3", "#1a1a1a"] },
   { id: "light",     label: "白天", desc: "明亮清爽",     colors: ["#f8f9fb", "#3b82f6", "#6366f1"] },
   { id: "tabby",     label: "Tabby", desc: "蓝紫深灰风", colors: ["#13171d", "#7b68ee", "#9b8cf0"] },
 ];
 
 const DEFAULT_OVERRIDES: Record<ThemeId, ThemeOverride> = {
-  "deep-blue": { accentHue: 210, glassAlpha: 0.88, borderAlpha: 0.13 },
-  "light":     { accentHue: 217, glassAlpha: 0.82, borderAlpha: 0.14 },
-  "tabby":     { accentHue: 255, glassAlpha: 0.82, borderAlpha: 0.13 },
+  "deep-blue": { accentHue: 210, glassAlpha: 0.88, borderAlpha: 0.13, panelHue: -1, panelSat: 40 },
+  "light":     { accentHue: 217, glassAlpha: 0.82, borderAlpha: 0.14, panelHue: -1, panelSat: 20 },
+  "tabby":     { accentHue: 255, glassAlpha: 0.82, borderAlpha: 0.13, panelHue: -1, panelSat: 40 },
 };
 
 function rangeSlider(label: string, min: number, max: number, step: number, value: number, onChange: (v: number) => void, fmt?: (v: number) => string) {
@@ -177,8 +177,14 @@ export default function SettingsPanel({ open, onClose }: Props) {
                       <p className="text-xs text-[var(--text-muted)] mb-1">拖动滑块实时预览，满意后点保存</p>
                       {rangeSlider("Accent 色相", 0, 360, 1, draft.accentHue, (v) => updateDraft("accentHue", v), (v) => `${v}°`)}
                       <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ 侧栏/标题栏/状态栏的高亮颜色</p>
-                      {rangeSlider("面板透明度", 20, 95, 1, Math.round(draft.glassAlpha * 100), (v) => updateDraft("glassAlpha", v / 100), (v) => `${v}%`)}
-                      <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ 侧边栏、标题栏、状态栏的毛玻璃感</p>
+                      {rangeSlider("窗口透明度", 20, 95, 1, Math.round(draft.glassAlpha * 100), (v) => updateDraft("glassAlpha", v / 100), (v) => `${v}%`)}
+                      <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ 低值透视桌面，高值厚重不透明</p>
+                      {rangeSlider("面板色相", -1, 360, 1, Math.round(draft.panelHue ?? -1), (v) => updateDraft("panelHue", v), (v) => v < 0 ? "中性灰" : `${v}°`)}
+                      <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ -1=中性灰，拖动为侧/顶/底栏着色</p>
+
+                      {rangeSlider("面板饱和度", 0, 80, 1, Math.round(draft.panelSat ?? 40), (v) => updateDraft("panelSat", v), (v) => `${v}%`)}
+                      <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ 0=纯灰，80=浓郁，配合色相使用</p>
+
                       {rangeSlider("边框可见度", 5, 30, 1, Math.round(draft.borderAlpha * 100), (v) => updateDraft("borderAlpha", v / 100), (v) => `${v}%`)}
                       <p className="text-[11px] text-[var(--text-muted)] -mt-1">→ 各区域分隔线的深浅</p>
 

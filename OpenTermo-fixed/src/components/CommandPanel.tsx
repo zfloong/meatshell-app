@@ -321,7 +321,6 @@ export default function CommandPanel() {
   // Auto-expand all cards on first load
   useEffect(() => {
     if (!expandedInit && tree.length > 0) {
-      setExpandedCards(new Set(tree.map((n) => n.path)));
       setExpandedInit(true);
     }
   }, [tree, expandedInit]);
@@ -976,7 +975,7 @@ function MoveDialog({
             className="w-full h-8 rounded-sm border-2 border-transparent bg-[var(--bg-surface)] px-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--border-focus)]"
           >
             <option value="">-- 选择文件夹 --</option>
-            <option value="">???</option>
+            <option value="">未分类</option>
             {folderPaths
               .filter((p) => p && p !== "未分类")
               .map((p) => (
@@ -987,7 +986,7 @@ function MoveDialog({
           </select>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-sm h-7">
-              ??
+              取消
             </Button>
             <Button
               variant="primary"
@@ -995,7 +994,7 @@ function MoveDialog({
               onClick={() => onMove(ids, selected)}
               className="text-sm h-7"
             >
-              ??
+              移动
             </Button>
           </div>
         </div>
@@ -1044,7 +1043,7 @@ function NewFolderDialog({
           />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={onClose} className="text-sm h-7">
-              ??
+              取消
             </Button>
             <Button
               variant="primary"
@@ -1053,7 +1052,7 @@ function NewFolderDialog({
               disabled={!name.trim()}
               className="text-sm h-7"
             >
-              ??
+              创建
             </Button>
           </div>
         </div>

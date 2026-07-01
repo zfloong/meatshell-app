@@ -19,11 +19,12 @@
         
         "decorations": false,
         "resizable": true,
+        "transparent": true,
         "minWidth": 800,
         "minHeight": 600,
         "dragDropEnabled": false,
-        "devtools": false,
-        "visible": false,
+        "devtools": true,
+        "visible": true,
         "backgroundColor": "#000000"
       }
     ],

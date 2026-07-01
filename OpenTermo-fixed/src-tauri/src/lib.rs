@@ -4,6 +4,7 @@ mod session;
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::OnceLock;
 
 use tauri::Manager;
 #[cfg(windows)]
@@ -41,7 +42,6 @@ fn discover_rclone() -> String {
             let name = entry.file_name();
             let name_str = name.to_string_lossy();
             if name_str.starts_with("Rclone.Rclone_") {
-                // Recursively search for rclone.exe inside
                 if let Some(found) = find_exe_recursive(&entry.path(), "rclone.exe") {
                     return found;
                 }
@@ -58,7 +58,6 @@ fn discover_rclone() -> String {
             return candidate.to_string();
         }
     }
-    // Fallback
     "rclone.exe".to_string()
 }
 
@@ -81,9 +80,15 @@ fn find_exe_recursive(dir: &std::path::Path, exe_name: &str) -> Option<String> {
     None
 }
 
+static RCLONE_PATH: OnceLock<String> = OnceLock::new();
+
+/// Returns the rclone executable path, discovering it on first call.
+pub(crate) fn get_rclone_path() -> &'static str {
+    RCLONE_PATH.get_or_init(|| discover_rclone())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let rclone_path = discover_rclone();
     // Kill any stale rclone processes from previous runs
     let _ = std::process::Command::new("taskkill").creation_flags(0x08000000)
         .args(["/F", "/IM", "rclone.exe"])
@@ -95,11 +100,10 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(SessionManager::new(rclone_path))
+        .manage(SessionManager::new())
         .manage(Mutex::new(SystemSampler::new()))
         .manage(Arc::new(PromptManager::new()))
         .setup(|app| {
-            // Set window icon from the icon PNG so the taskbar shows the real icon.
             let icon_bytes = include_bytes!("../icons/icon.png");
             if let Ok(img) = image::load_from_memory(icon_bytes) {
                 let rgba = img.into_rgba8();
@@ -109,15 +113,6 @@ pub fn run() {
                     let _ = window.set_icon(tauri_icon);
                 }
             }
-            // Delay showing the window so WebView2 internal init finishes first.
-            // This prevents the multiple black-box flickering on startup.
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
-                if let Some(w) = handle.get_webview_window("main") {
-                    let _ = w.show();
-                }
-            });
             Ok(())
         })
         .on_window_event({
@@ -125,18 +120,13 @@ pub fn run() {
             move |window, event| {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     if is_closing.swap(true, Ordering::SeqCst) {
-                        // Second invocation: cleanup already done, let it close
                         return;
                     }
                     api.prevent_close();
-
-                    // Clone handles before moving into the thread.
                     let window_for_state = window.clone();
                     let window_for_close = window.clone();
                     let app_handle = window.app_handle().clone();
-
                     std::thread::spawn(move || {
-                        // Blocking cleanup (rclone unmount, SSH disconnect)
                         let mgr = window_for_state.state::<SessionManager>();
                         mgr.unmount_all();
                         let ids: Vec<String> =
@@ -144,7 +134,6 @@ pub fn run() {
                         for id in &ids {
                             let _ = mgr.disconnect(id);
                         }
-                        // Close must happen on the main thread (WebView2 requirement)
                         let _ = app_handle.run_on_main_thread(move || {
                             let _ = window_for_close.destroy();
                         });

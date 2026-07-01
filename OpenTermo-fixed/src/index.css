@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -11,34 +11,17 @@
   font-display: swap;
 }
 
-/* ── Design Tokens — Dark (default) ── */
+/* ━━━━━ Static tokens (never touched by JS) ━━━━━ */
 :root {
-  --bg-base:       #000000;
-  --bg-surface:    #0d0d0d;
-  --bg-glass:      rgba(26,26,26,0.92);
-  --bg-elevated:   #1a1a1a;
   --bg-overlay:    rgba(0,0,0,0.60);
   --text-primary:   #e4e4e4;
   --text-secondary: #888888;
   --text-heading:   #f0f0f0;
   --text-muted:     rgba(255,255,255,0.20);
   --text-inverse:   #ffffff;
-  --accent:           #8b9dc3;
-  --accent-rgb: 139 157 195;
-  --accent-soft:      #9badcc;
-  --accent-soft-rgb: 155 173 204;
-  --accent-dim:       rgba(139,157,195,0.14);
-  --accent-border:    rgba(139,157,195,0.28);
   --color-success:  #4ade80;
   --color-warning:  #fbbf24;
   --color-danger:   #f87171;
-  --color-info:     #8b9dc3;
-  --surface-hover:     rgba(255,255,255,0.09);
-  --surface-active:    rgba(255,255,255,0.09);
-  --surface-selected:  rgba(255,255,255,0.10);
-  --border-subtle:    rgba(255,255,255,0.07);
-  --border-default:   rgba(255,255,255,0.13);
-  --border-strong:    rgba(255,255,255,0.19);
   --border-focus:     rgba(139,157,195,0.42);
   --shadow-sm:   0 1px 2px rgba(0,0,0,0.55);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.60);
@@ -65,87 +48,29 @@
   --duration-fast:   120ms;
   --duration-base:   180ms;
   --duration-slow:   280ms;
-  --scrollbar-thumb:       rgba(255,255,255,0.12);
-  --scrollbar-thumb-hover: rgba(255,255,255,0.20);
 }
 
-
-
-/* ═══ Light Theme ═══ */
+/* ━━━━━ Light theme overrides (text/shadows only; colors via JS) ━━━━━ */
 [data-theme="light"] {
-  --bg-base:       #f8f9fb;
-  --bg-surface:    #ffffff;
-  --bg-glass:      rgba(255,255,255,0.82);
-  --bg-elevated:   #ffffff;
   --bg-overlay:    rgba(0,0,0,0.20);
   --text-primary:   #1a1d23;
   --text-secondary: #6b7280;
   --text-heading:   #0f1117;
   --text-muted:     rgba(0,0,0,0.30);
   --text-inverse:   #ffffff;
-  --accent:           #3b82f6;
-    --accent-rgb: 59 130 246;
-  --accent-soft:      #6366f1;
-    --accent-soft-rgb: 99 102 241;
-  --accent-dim:       rgba(59,130,246,0.10);
-  --accent-border:    rgba(59,130,246,0.25);
-  --color-success:  #22c55e;
-  --color-warning:  #f59e0b;
-  --color-danger:   #ef4444;
-  --color-info:     #3b82f6;
-  --surface-hover:     rgba(0,0,0,0.07);
-  --surface-active:    rgba(0,0,0,0.06);
-  --surface-selected:  rgba(59,130,246,0.08);
-  --border-subtle:    rgba(0,0,0,0.08);
-  --border-default:   rgba(0,0,0,0.14);
-  --border-strong:    rgba(0,0,0,0.20);
   --border-focus:     rgba(59,130,246,0.40);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.06);
   --shadow-md:   0 4px 12px rgba(0,0,0,0.08);
   --shadow-lg:   0 8px 24px rgba(0,0,0,0.10);
   --shadow-xl:   0 16px 40px rgba(0,0,0,0.12);
-  --scrollbar-thumb:       rgba(0,0,0,0.12);
-  --scrollbar-thumb-hover: rgba(0,0,0,0.22);
-}
-/* ── Tabby Terminal ── */
-[data-theme="tabby"] {
-  --bg-base:       #13171d;
-  --bg-surface:    #1a1f27;
-  --bg-glass:      rgba(26,31,39,0.82);
-  --bg-elevated:   #212630;
-  --bg-overlay:    rgba(0,0,0,0.55);
-  --text-primary:   #e2e6ed;
-  --text-secondary: #7b8496;
-  --text-heading:   #eceff4;
-  --text-muted:     rgba(255,255,255,0.24);
-  --text-inverse:   #ffffff;
-  --accent:           #7b68ee;
-    --accent-rgb: 123 104 238;
-  --accent-soft:      #9b8cf0;
-    --accent-soft-rgb: 155 140 240;
-  --accent-dim:       rgba(123,104,238,0.14);
-  --accent-border:    rgba(123,104,238,0.30);
-  --color-success:  #50d890;
-  --color-warning:  #f0c060;
-  --color-danger:   #f06278;
-  --color-info:     #7b68ee;
-  --surface-hover:     rgba(255,255,255,0.09);
-  --surface-active:    rgba(255,255,255,0.07);
-  --surface-selected:  rgba(123,104,238,0.12);
-  --border-subtle:    rgba(255,255,255,0.07);
-  --border-default:   rgba(255,255,255,0.13);
-  --border-strong:    rgba(255,255,255,0.18);
-  --border-focus:     rgba(123,104,238,0.42);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.40);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.50);
-  --shadow-lg:   0 8px 28px rgba(0,0,0,0.60);
-  --shadow-xl:   0 16px 44px rgba(0,0,0,0.70);
-  --scrollbar-thumb:       rgba(255,255,255,0.10);
-  --scrollbar-thumb-hover: rgba(255,255,255,0.18);
+  --color-success:  #22c55e;
+  --color-warning:  #f59e0b;
+  --color-danger:   #ef4444;
 }
 
+/* Tabby shares dark-mode text tokens (no special block needed) */
 
-/* ═══ Base Reset ═══ */
+/* ━━━━━ Base Reset ━━━━━ */
 html { font-size: 18px; }
 html, body, #root {
   height: 100%;
@@ -205,19 +130,13 @@ body {
   animation:fadeIn var(--duration-fast) var(--ease-out);
 }
 
-/* Terminal bottom breathing room */
-.xterm-viewport {
-  padding-bottom:4px;
-}
-
-
-/* Force cursor blink — WebView2 sometimes suppresses CSS animations */
+/* Terminal */
+.xterm-viewport { padding-bottom:4px; }
 .xterm-cursor-blink {
   animation: xterm-cursor-blink 1s step-end infinite !important;
 }
-@keyframes xterm-cursor-blink {
-  50% { opacity: 0; }
-}
+@keyframes xterm-cursor-blink { 50% { opacity: 0; } }
+
 .status-dot {
   width:7px; height:7px; border-radius:50%; flex-shrink:0;
   box-shadow:0 0 6px currentColor;

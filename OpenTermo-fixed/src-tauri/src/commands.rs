@@ -304,7 +304,7 @@ pub fn rclone_mount(
     };
 
     create_rclone_config(
-        &mgr.rclone_path,
+        crate::get_rclone_path(),
         &config_name,
         &host,
         port,
@@ -314,7 +314,7 @@ pub fn rclone_mount(
     )?;
 
     // Spawn rclone mount as background process
-    let mut cmd = Command::new(&mgr.rclone_path);
+    let mut cmd = Command::new(crate::get_rclone_path());
     cmd.creation_flags(0x08000000);
     cmd.args(["mount", &format!("{}:/", config_name), &drive_letter])
         .arg("--volname")
@@ -337,7 +337,7 @@ pub fn rclone_mount(
             if let Some(ref mut s) = child.stderr {
                 let _ = s.read_to_string(&mut stderr_str);
             }
-            let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
+            let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
                 .args(["config", "delete", &config_name])
                 .output();
             return Err(format!(
@@ -353,7 +353,7 @@ pub fn rclone_mount(
                 Err(_) => {
                     // Drive not accessible, kill and clean up
                     let _ = child.kill();
-                    let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
+                    let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
                         .args(["config", "delete", &config_name])
                         .output();
                     return Err(format!(
@@ -364,7 +364,7 @@ pub fn rclone_mount(
             }
         }
         Err(e) => {
-            let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
+            let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
                 .args(["config", "delete", &config_name])
                 .output();
             return Err(format!("[rclone] 进程异常: {}", e));
@@ -399,7 +399,7 @@ pub fn rclone_unmount(
 
     std::thread::sleep(std::time::Duration::from_millis(300));
 
-    let _ = Command::new(&mgr.rclone_path).creation_flags(0x08000000)
+    let _ = Command::new(crate::get_rclone_path()).creation_flags(0x08000000)
         .args(["config", "delete", &mount.config_name])
         .output();
 

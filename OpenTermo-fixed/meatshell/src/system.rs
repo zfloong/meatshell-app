@@ -36,8 +36,7 @@ pub struct SystemSampler {
 
 impl SystemSampler {
     pub fn new() -> Self {
-        let mut sys = System::new_all();
-        sys.refresh_all();
+        let sys = System::new_all();
         let nets = Networks::new_with_refreshed_list();
         let last_rx_total = nets.iter().map(|(_, d)| d.total_received()).sum();
         let last_tx_total = nets.iter().map(|(_, d)| d.total_transmitted()).sum();
