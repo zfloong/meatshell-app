@@ -113,6 +113,10 @@ pub fn run() {
                     let _ = window.set_icon(tauri_icon);
                 }
             }
+            // Show window after WebView is ready (eliminates white flash)
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+            }
             Ok(())
         })
         .on_window_event({
